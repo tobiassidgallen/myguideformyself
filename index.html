@@ -685,7 +685,7 @@ EOF
 # Update i3 config to use the new i3status config with proper bar configuration
 sed -i '/^bar {/,/^}/c\
 bar {\
-    status_command ~/.config/scripts/i3status-wrapper.py\
+    status_command i3status\
     position top\
     font pango:JetBrains Mono Nerd Font 12
     separator_symbol " | "

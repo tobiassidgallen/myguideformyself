@@ -269,7 +269,7 @@ reboot</code>
             <div class="command-block">
                 <h3>Install Desktop Environment</h3>
                 <div class="code-container">
-                    <code>sudo pacman -S --noconfirm xorg-server xorg-xinit i3-wm i3status i3lock dmenu alacritty firefox</code>
+                    <code>sudo pacman -S xorg-server xorg-xinit i3-wm i3status i3lock dmenu alacritty firefox</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">
                         <i class="fas fa-copy"></i>
                     </button>
@@ -682,12 +682,12 @@ tztime local {
 EOF
 
 # Update i3 config to use the new i3status config with proper bar configuration
-sed -i '/^bar {/,/^}/c\
+sed -i '/^[[:space:]]*bar[[:space:]]*{/,/^[[:space:]]*}/c\
 bar {\
     status_command i3status\
     position top\
-    font pango:JetBrains Mono Nerd Font 12
-    separator_symbol "|"
+    font pango:JetBrains Mono Nerd Font 12\
+    separator_symbol "|"\
     colors {\
         background \$bg-color\
         separator \$inactive-text-color\

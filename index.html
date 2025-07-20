@@ -725,7 +725,7 @@ EOF
 chmod +x ~/.config/scripts/dmenu_run.sh && \
 
 # Update i3 config to use styled dmenu (replace existing binding)
-sed -i 's|bindsym $mod+d exec dmenu_run|bindsym $mod+d exec ~/.config/scripts/dmenu_run.sh|' ~/.config/i3/config && \
+sed -i 's|bindsym \$mod+d exec --no-startup-id dmenu_run|bindsym \$mod+d exec ~/.config/scripts/dmenu_run.sh|' ~/.config/i3/config && \
 
 # Create power menu with clean options
 cat > ~/.config/scripts/dmenu_power.sh <<'EOF'

@@ -1303,14 +1303,15 @@ journalctl -u bluetooth --since "10 minutes ago"</code>
                         <h4>Check Battery Information</h4>
                         <div class="code-container">
                             <code># Battery status and health
-acpi -b
-acpi -i
+acpi -b && acpi -i
 
 # Battery manufacturer and model (for replacement)
-sudo dmidecode -t 39
+sudo dmidecode -s system-manufacturer
+sudo dmidecode -s system-product-name
+sudo dmidecode -t 22
 
 # Power consumption
-powertop
+sudo powertop
 
 # TLP battery status
 sudo tlp-stat -b</code>
@@ -1370,18 +1371,12 @@ btop
 
 # Disk usage
 df -h
-ncdu
 
 # Memory usage
 free -h
 
 # GPU information (AMD)
 lspci | grep VGA
-glxinfo | grep -i vendor
-
-# Network usage
-nethogs
-iftop
 
 # Process monitoring
 ps aux

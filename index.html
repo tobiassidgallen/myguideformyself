@@ -690,13 +690,13 @@ bar {\
     font pango:JetBrains Mono Nerd Font 12
     separator_symbol " | "
     colors {\
-        background $bg-color
-        separator $inactive-text-color
-        # border background text
-        focused_workspace $indicator-color $indicator-color $bg-color
-        inactive_workspace $inactive-bg-color $inactive-bg-color $inactive-text-color
-        active_workspace $inactive-bg-color $inactive-bg-color $text-color
-        urgent_workspace $urgent-bg-color $urgent-bg-color $text-color
+        background \$bg-color\
+        separator \$inactive-text-color\
+        # border background text\
+        focused_workspace \$indicator-color \$indicator-color \$bg-color\
+        inactive_workspace \$inactive-bg-color \$inactive-bg-color \$inactive-text-color\
+        active_workspace \$inactive-bg-color \$inactive-bg-color \$text-color\
+        urgent_workspace \$urgent-bg-color \$urgent-bg-color \$text-color\
     }\
 }' ~/.config/i3/config</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">

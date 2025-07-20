@@ -773,10 +773,10 @@ echo 'bindsym $mod+Shift+p exec ~/.config/scripts/dmenu_power.sh' >> ~/.config/i
 cat > ~/.config/picom/picom.conf <<'EOF'
 # Shadows
 shadow = true;
-shadow-radius = 7;
-shadow-offset-x = -7;
-shadow-offset-y = -7;
-shadow-opacity = 0.7;
+shadow-radius = 12;
+shadow-offset-x = -8;
+shadow-offset-y = -8;
+shadow-opacity = 0.5;
 shadow-red = 0.0;
 shadow-green = 0.0;
 shadow-blue = 0.0;
@@ -791,7 +791,7 @@ shadow-exclude = [
 ];
 
 # Opacity
-inactive-opacity = 0.95;
+inactive-opacity = 0.92;
 active-opacity = 1.0;
 frame-opacity = 1.0;
 inactive-opacity-override = false;
@@ -810,12 +810,12 @@ opacity-rule = [
 
 # Fading
 fading = true;
-fade-in-step = 0.03;
-fade-out-step = 0.03;
-fade-delta = 5;
+fade-in-step = 0.04;
+fade-out-step = 0.04;
+fade-delta = 6;
 
 # Corners (subtle rounding)
-corner-radius = 6;
+corner-radius = 10;
 rounded-corners-exclude = [
   "window_type = 'dock'",
   "window_type = 'desktop'"
@@ -824,7 +824,7 @@ rounded-corners-exclude = [
 # Background blurring (light blur for aesthetics)
 blur-background = true;
 blur-method = "dual_kawase";
-blur-strength = 3;
+blur-strength = 5;
 blur-background-exclude = [
   "window_type = 'dock'",
   "window_type = 'desktop'",
@@ -844,11 +844,11 @@ log-level = "warn";
 
 wintypes:
 {
-  tooltip = { fade = true; shadow = true; opacity = 0.75; focus = true; full-shadow = false; };
+  tooltip = { fade = true; shadow = true; opacity = 0.85; focus = true; full-shadow = false; };
   dock = { shadow = false; clip-shadow-above = true; }
   dnd = { shadow = false; }
-  popup_menu = { opacity = 0.95; }
-  dropdown_menu = { opacity = 0.95; }
+  popup_menu = { opacity = 0.92; }
+  dropdown_menu = { opacity = 0.92; }
 };
 EOF
 

@@ -509,8 +509,7 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 EOF
-sudo systemctl enable cpu-performance.service && \
-alias diskhealth='sudo smartctl -H /dev/nvme0n1 && sudo fstrim -v /'</code>
+sudo systemctl enable cpu-performance.service</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">
                         <i class="fas fa-copy"></i>
                     </button>
@@ -1355,7 +1354,6 @@ sudo tlp-stat -b</code>
                             <li><code>powersave</code> - Enable power saving mode</li>
                             <li><code>boost</code> - Temporary performance boost</li>
                             <li><code>boottime</code> - Analyze boot time and slow services</li>
-                            <li><code>diskhealth</code> - Check NVMe health and trim SSD</li>
                         </ul>
                     </div>
                 </div>

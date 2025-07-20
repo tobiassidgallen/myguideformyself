@@ -1,0 +1,1549 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arch Linux Installation Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><i class="fab fa-linux"></i> Arch Linux Installation Guide</h1>
+            <p>Complete step-by-step installation and configuration guide</p>
+        </div>
+    </header>
+
+    <nav class="sidebar">
+        <ul>
+            <li><a href="#initial-setup">Initial Setup</a></li>
+            <li><a href="#base-install">Base Installation</a></li>
+            <li><a href="#post-install">Post Installation</a></li>
+            <li><a href="#system-config">System Configuration</a></li>
+            <li><a href="#performance">Performance Optimization</a></li>
+            <li><a href="#desktop-environment">Desktop Environment</a></li>
+            <li><a href="#rice-setup">Rice Configuration</a></li>
+            <li><a href="#final-steps">Final Steps</a></li>
+            <li><a href="#network-management">Network Management</a></li>
+            <li><a href="#bluetooth">Bluetooth</a></li>
+            <li><a href="#glossary">Glossary</a></li>
+        </ul>
+    </nav>
+
+    <main class="content">
+        <section id="initial-setup" class="section">
+            <h2><i class="fas fa-play-circle"></i> Initial Setup</h2>
+            
+            <div class="command-block">
+                <h3>Set Font and Keyboard Layout</h3>
+                <div class="code-container">
+                    <code>setfont ter-132b && loadkeys us</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Connect to WiFi</h3>
+                <div class="code-container">
+                    <code>iwctl
+device list
+station wlan0 scan
+station wlan0 get-networks
+station wlan0 connect "YOUR_NETWORK_NAME"
+exit</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Test Internet Connection</h3>
+                <div class="code-container">
+                    <code>ping -c 3 archlinux.org || { echo "No internet"; exit 1; }</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Set System Clock</h3>
+                <div class="code-container">
+                    <code>timedatectl set-ntp true</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="partitioning" class="section">
+            <h2><i class="fas fa-hdd"></i> Disk Partitioning</h2>
+            
+            <div class="command-block">
+                <h3>List Block Devices</h3>
+                <div class="code-container">
+                    <code>lsblk</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Partition Disk</h3>
+                <div class="code-container">
+                    <code>cfdisk /dev/nvme0n1</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Format Partitions</h3>
+                <div class="code-container">
+                    <code>mkfs.ext4 /dev/nvme0n1p3
+mkfs.fat -F 32 /dev/nvme0n1p1
+mkswap /dev/nvme0n1p2</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Mount Partitions</h3>
+                <div class="code-container">
+                    <code>mount /dev/nvme0n1p3 /mnt
+mkdir -p /mnt/boot/efi
+mount /dev/nvme0n1p1 /mnt/boot/efi
+swapon /dev/nvme0n1p2</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="base-install" class="section">
+            <h2><i class="fas fa-download"></i> Base Installation</h2>
+            
+            <div class="command-block">
+                <h3>Install Base System</h3>
+                <div class="code-container">
+                    <code>pacstrap /mnt base linux linux-firmware amd-ucode sof-firmware base-devel grub efibootmgr networkmanager sudo git neovim</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Generate fstab</h3>
+                <div class="code-container">
+                    <code>genfstab /mnt
+genfstab -U /mnt >> /mnt/etc/fstab</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Chroot into System</h3>
+                <div class="code-container">
+                    <code>arch-chroot /mnt</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="system-config" class="section">
+            <h2><i class="fas fa-cog"></i> System Configuration</h2>
+            
+            <div class="command-block">
+                <h3>Set Timezone</h3>
+                <div class="code-container">
+                    <code>date
+ln -sf /usr/share/zoneinfo/Asia/Manila /etc/localtime
+hwclock --systohc
+date</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Set Locale</h3>
+                <div class="code-container">
+                    <code>echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen
+locale-gen
+echo 'LANG=en_US.UTF-8' > /etc/locale.conf
+echo 'KEYMAP=us' > /etc/vconsole.conf</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Set Hostname and Users</h3>
+                <div class="code-container">
+                    <code>echo 'tobias' > /etc/hostname
+passwd
+useradd -m -G wheel -s /bin/bash sid
+passwd sid</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Configure sudo</h3>
+                <div class="code-container">
+                    <code>echo '%wheel ALL=(ALL:ALL) ALL' >> /etc/sudoers</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Install and Configure Bootloader</h3>
+                <div class="code-container">
+                    <code>systemctl enable NetworkManager
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
+grub-mkconfig -o /boot/grub/grub.cfg</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Exit and Reboot</h3>
+                <div class="code-container">
+                    <code>exit
+umount -R /mnt
+reboot</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="post-install" class="section">
+            <h2><i class="fas fa-rocket"></i> Post Installation</h2>
+            
+            <div class="command-block">
+                <h3>Connect to WiFi</h3>
+                <div class="code-container">
+                    <code>nmcli device wifi connect "YOUR_NETWORK_NAME" password "YOUR_PASSWORD"</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Update System</h3>
+                <div class="code-container">
+                    <code>sudo pacman -Syu</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Install Desktop Environment</h3>
+                <div class="code-container">
+                    <code>sudo pacman -S --noconfirm xorg-server xorg-xinit i3-wm i3status i3lock dmenu alacritty firefox</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Configure X11</h3>
+                <div class="code-container">
+                    <code>echo 'exec i3' > ~/.xinitrc</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>Start Desktop</h3>
+                <div class="code-container">
+                    <code>startx</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="package-install" class="section">
+            <h2><i class="fas fa-box"></i> Essential Packages Installation</h2>
+            
+            <div class="command-block">
+                <h3>Install AUR Helper and Essential Packages</h3>
+                <div class="code-container">
+                    <code>sudo sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman\.d\/mirrorlist/ s/^#//' /etc/pacman.conf && \
+sudo pacman -Syu && \
+git clone https://aur.archlinux.org/yay.git && \
+cd yay && \
+makepkg -si --noconfirm --needed && \
+cd .. && \
+rm -rf yay && \
+sudo pacman -S --noconfirm man-db man-pages reflector tmux thunar p7zip unzip tar ntfs-3g exfatprogs gvfs gvfs-mtp gvfs-gphoto2 gvfs-smb udisks2 udiskie libmtp gparted picom feh maim xclip xorg-xrandr fastfetch btop lm_sensors acpi powertop tlp tlp-rdw dmidecode brightnessctl pipewire pipewire-pulse pipewire-alsa wireplumber alsa-utils alsa-ucm-conf bluez bluez-utils libinput xf86-input-libinput xorg-xinput xdotool v4l-utils cheese wget curl rsync fzf dunst libnotify mpv ufw mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon xf86-video-amdgpu mesa-vdpau libva-mesa-driver noto-fonts-emoji noto-fonts noto-fonts-cjk && \
+yay -S --noconfirm ttf-jetbrains-mono-nerd spotify || echo "Some AUR packages failed"</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="system-optimization" class="section">
+            <h2><i class="fas fa-tachometer-alt"></i> System Optimization</h2>
+            
+            <div class="command-block">
+                <h3>Configure System Services and Security</h3>
+                <div class="code-container">
+                    <code>sudo usermod -aG audio,video,input,storage,power,rfkill,sys,adm,disk sid && \
+sudo reflector --country Philippines,Singapore,South_Korea,Japan --age 12 --protocol https --sort rate --latest 10 --save /etc/pacman.d/mirrorlist && \
+sudo systemctl enable --now reflector.timer && \
+sudo pacman -Syyu && \
+sudo modprobe ip_tables && \
+sudo modprobe ip6_tables && \
+sudo systemctl enable ufw && \
+sudo ufw default deny incoming && \
+sudo ufw default allow outgoing && \
+sudo ufw --force enable && \
+sudo sensors-detect --auto && \
+sudo sed -i 's/#AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf && \
+systemctl --user daemon-reexec && \
+systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service && \
+sudo systemctl enable --now bluetooth tlp && \
+sudo systemctl mask systemd-networkd-wait-online.service && \
+sudo sed -i 's/^#DefaultTimeoutStopSec=.*$/DefaultTimeoutStopSec=10s/' /etc/systemd/system.conf && \
+sudo sed -i 's/^#DefaultTimeoutStartSec=.*$/DefaultTimeoutStartSec=5s/' /etc/systemd/system.conf && \
+sudo systemctl enable fstrim.timer && \
+sudo systemctl start fstrim.timer && \
+sudo systemctl daemon-reexec</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="performance" class="section">
+            <h2><i class="fas fa-bolt"></i> Performance Optimization</h2>
+            
+            <div class="command-block">
+                <h3>GRUB and Hardware Optimization</h3>
+                <div class="code-container">
+                    <code>sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="quiet splash mitigations=off nowatchdog processor.max_cstate=1 amd_pstate=active"/' /etc/default/grub && \
+sudo grub-mkconfig -o /boot/grub/grub.cfg && \
+echo 'ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="mq-deadline"' | sudo tee /etc/udev/rules.d/60-ioschedulers.rules && \
+brightnessctl set 50% && \
+sudo mkdir -p /etc/X11/xorg.conf.d && \
+sudo tee /etc/X11/xorg.conf.d/30-touchpad.conf > /dev/null <<'EOF'
+Section "InputClass"
+    Identifier "touchpad"
+    Driver "libinput"
+    MatchIsTouchpad "on"
+    Option "Tapping" "on"
+    Option "TappingButtonMap" "lrm"
+    Option "NaturalScrolling" "true"
+    Option "ScrollMethod" "twofinger"
+    Option "ClickMethod" "clickfinger"
+    Option "DisableWhileTyping" "on"
+EndSection
+EOF</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="custom-scripts" class="section">
+            <h2><i class="fas fa-terminal"></i> Custom System Scripts</h2>
+            
+            <div class="command-block">
+                <h3>Create System Management Scripts</h3>
+                <div class="code-container">
+                    <code>sudo tee /usr/local/bin/update > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== UPDATING SYSTEM ==="
+sudo pacman -Syu --noconfirm
+echo "=== UPDATING AUR PACKAGES ==="
+yay -Syu --noconfirm
+echo "=== UPDATE COMPLETE ==="
+EOF
+sudo chmod +x /usr/local/bin/update && \
+sudo tee /usr/local/bin/debloat > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== DISK SPACE BEFORE ==="
+df -h / | tail -1
+echo "=== CLEANING PACKAGE CACHE ==="
+sudo pacman -Sc --noconfirm
+yay -Sc --noconfirm
+echo "=== REMOVING ORPHANED PACKAGES ==="
+sudo pacman -Rns $(pacman -Qtdq) --noconfirm 2>/dev/null || echo "No orphaned packages"
+echo "=== CLEARING SYSTEM LOGS ==="
+sudo journalctl --vacuum-time=3d
+echo "=== CLEARING USER CACHE ==="
+rm -rf ~/.cache/* 2>/dev/null || true
+echo "=== CLEARING TEMP FILES ==="
+sudo rm -rf /tmp/* /var/tmp/* 2>/dev/null || true
+echo "=== CLEARING THUMBNAILS ==="
+rm -rf ~/.thumbnails/* ~/.local/share/Trash/* 2>/dev/null || true
+echo "=== CLEARING FIREFOX CACHE ==="
+rm -rf ~/.mozilla/firefox/*/storage/default/cache2/* 2>/dev/null || true
+echo "=== MEMORY CLEANUP ==="
+sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
+echo "=== DEBLOAT COMPLETE ==="
+df -h / | tail -1
+EOF
+sudo chmod +x /usr/local/bin/debloat && \
+sudo tee /usr/local/bin/performance > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== ENABLING PERFORMANCE MODE ==="
+echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+echo "=== SETTING VM SWAPPINESS ==="
+echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.d/99-swappiness.conf
+echo "=== OPTIMIZING I/O SCHEDULER ==="
+echo mq-deadline | sudo tee /sys/block/nvme0n1/queue/scheduler
+echo "=== PERFORMANCE MODE ACTIVE ==="
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+EOF
+sudo chmod +x /usr/local/bin/performance && \
+sudo tee /usr/local/bin/powersave > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== ENABLING POWERSAVE MODE ==="
+echo powersave | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+echo "=== ENABLING WIFI POWERSAVE ==="
+sudo iw dev wlan0 set power_save on 2>/dev/null || echo "Wifi powersave not available"
+echo "=== REDUCING BRIGHTNESS ==="
+brightnessctl set 30%
+echo "=== POWERSAVE MODE ACTIVE ==="
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+EOF
+sudo chmod +x /usr/local/bin/powersave && \
+sudo tee /usr/local/bin/boost > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== TEMPORARY PERFORMANCE BOOST ==="
+echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+echo 1 | sudo tee /proc/sys/vm/drop_caches
+echo "=== BOOST ACTIVE FOR THIS SESSION ==="
+EOF
+sudo chmod +x /usr/local/bin/boost && \
+sudo tee /usr/local/bin/boottime > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== BOOT TIME ANALYSIS ==="
+systemd-analyze
+echo ""
+echo "=== SLOWEST SERVICES ==="
+systemd-analyze blame | head -10
+echo ""
+echo "=== CRITICAL CHAIN ==="
+systemd-analyze critical-chain
+EOF
+sudo chmod +x /usr/local/bin/boottime</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="advanced-performance" class="section">
+            <h2><i class="fas fa-microchip"></i> Advanced Performance Configuration</h2>
+            
+            <div class="command-block">
+                <h3>System Performance Tweaks</h3>
+                <div class="code-container">
+                    <code>sudo tee /etc/sysctl.d/99-performance.conf > /dev/null <<'EOF'
+# Performance optimizations and Advanced I/O optimizations
+vm.swappiness=10
+vm.vfs_cache_pressure=50
+vm.dirty_ratio=15
+vm.dirty_background_ratio=5
+kernel.sched_migration_cost_ns=5000000
+kernel.sched_autogroup_enabled=0
+vm.dirty_expire_centisecs = 1500
+vm.dirty_writeback_centisecs = 1500
+vm.page-cluster = 0
+kernel.sched_rt_runtime_us = 950000
+kernel.sched_rt_period_us = 1000000
+EOF
+sudo tee /etc/systemd/system/cpu-performance.service > /dev/null <<'EOF'
+[Unit]
+Description=Set CPU Performance Governor
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl enable cpu-performance.service && \
+alias diskhealth='sudo smartctl -H /dev/nvme0n1 && sudo fstrim -v /'</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="desktop-environment" class="section">
+            <h2><i class="fas fa-desktop"></i> Desktop Environment Setup</h2>
+            
+            <div class="command-block">
+                <h3>Wallpaper Script Setup</h3>
+                <div class="code-container">
+                    <code>mkdir -p ~/.config/scripts ~/Pictures/wallpapers && \
+cat > ~/.config/scripts/wallpaper.sh <<'EOF'
+#!/bin/bash
+WALLPAPER_DIR="$HOME/Pictures/wallpapers"
+
+if [ ! -d "$WALLPAPER_DIR" ]; then
+    echo "Wallpaper directory not found: $WALLPAPER_DIR"
+    mkdir -p "$WALLPAPER_DIR"
+    echo "Please add wallpapers to $WALLPAPER_DIR"
+    exit 1
+fi
+
+WALLPAPERS=($(find "$WALLPAPER_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \)))
+
+if [ ${#WALLPAPERS[@]} -eq 0 ]; then
+    echo "No wallpapers found in $WALLPAPER_DIR"
+    exit 1
+fi
+
+RANDOM_WALLPAPER=${WALLPAPERS[$RANDOM % ${#WALLPAPERS[@]}]}
+feh --bg-scale "$RANDOM_WALLPAPER"
+echo "Wallpaper set to: $(basename "$RANDOM_WALLPAPER")"
+EOF
+chmod +x ~/.config/scripts/wallpaper.sh</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="i3-config" class="section">
+            <h2><i class="fas fa-window-maximize"></i> i3 Configuration</h2>
+            
+            <div class="command-block">
+                <h3>Configure i3 Window Manager</h3>
+                <div class="code-container">
+                    <code>mkdir -p ~/.config/alacritty && \
+cat > ~/.xinitrc <<'EOF'
+~/.config/scripts/wallpaper.sh auto &
+exec i3
+EOF
+{
+echo "exec --no-startup-id ~/.config/scripts/wallpaper.sh auto"
+echo "bindsym \$mod+Shift+w exec ~/.config/scripts/wallpaper.sh random"
+echo 'bindsym Print exec maim | xclip -selection clipboard -t image/png'
+echo 'bindsym Shift+Print exec maim -s | xclip -selection clipboard -t image/png'
+echo 'bindsym XF86MonBrightnessUp exec brightnessctl set +5% && notify-send "Brightness: $(brightnessctl get)"'
+echo 'bindsym XF86MonBrightnessDown exec brightnessctl set 5%- && notify-send "Brightness: $(brightnessctl get)"'
+echo 'bindsym $mod+b exec firefox'
+echo 'bindsym $mod+t exec thunar'
+echo 'bindsym $mod+m exec spotify'
+echo 'bindsym $mod+n exec --no-startup-id "i3-msg workspace 5; alacritty -e nvim"'
+echo 'assign [class="Spotify"] 10'
+echo 'bindsym $mod+p exec alacritty -e btop'
+echo 'bindsym $mod+Tab workspace next'
+echo 'bindsym $mod+Shift+Tab workspace prev'
+echo 'bindsym $mod+x exec i3lock -c 000000'
+} >> ~/.config/i3/config && \
+sed -i 's/font pango:monospace 8/font pango:JetBrains Mono Nerd Font 12/' ~/.config/i3/config && \
+echo '[font]
+normal = { family = "JetBrains Mono Nerd Font" }
+size = 12' > ~/.config/alacritty/alacritty.toml</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="i3status" class="section">
+            <h2><i class="fas fa-chart-bar"></i> i3status Configuration</h2>
+            
+            <div class="command-block">
+                <h3>Configure Status Bar</h3>
+                <div class="code-container">
+                    <code>mkdir -p ~/.config/i3status && \
+cat > ~/.config/i3status/config <<'EOF'
+general {
+    colors = true
+    interval = 2
+    color_good = "#50fa7b"
+    color_bad = "#ff5555"
+    color_degraded = "#f1fa8c"
+}
+
+order += "wireless _first_"
+order += "ethernet _first_"
+order += "memory"
+order += "cpu_usage"
+order += "cpu_temperature 0"
+order += "disk /"
+order += "battery all"
+order += "volume master"
+order += "tztime local"
+
+wireless _first_ {
+    format_up = "📶 %quality %essid %ip"
+    format_down = "📶 down"
+    separator = false
+    separator_block_width = 1
+}
+
+ethernet _first_ {
+    format_up = "🌐 %ip (%speed)"
+    format_down = "🌐 down"
+    separator = false
+    separator_block_width = 1
+}
+
+memory {
+    format = "🧠 %used/%total"
+    threshold_degraded = "1G"
+    format_degraded = "🧠 < %free"
+}
+
+cpu_usage {
+    format = "💻 %usage"
+    max_threshold = 75
+    degraded_threshold = 25
+}
+
+cpu_temperature 0 {
+    format = "🌡️ %degrees°C"
+    max_threshold = 75
+    path = "/sys/devices/virtual/thermal/thermal_zone0/hwmon1/temp1_input"
+}
+
+disk "/" {
+    format = "💾 %used/%total"
+    low_threshold = 10
+    threshold_type = percentage_avail
+}
+
+battery all {
+    format = "%status %percentage %remaining %consumption"
+    format_down = "🔌 AC"
+    last_full_capacity = true
+    integer_battery_capacity = true
+    status_chr = "🔌"
+    status_bat = "🔋"
+    status_unk = "❓"
+    status_full = "⚡"
+    low_threshold = 15
+    threshold_type = percentage
+}
+
+volume master {
+    format = "🔊 %volume"
+    format_muted = "🔇 muted"
+    device = "pulse"
+}
+
+tztime local {
+    format = "📅 %m-%d-%Y 🕐 %H:%M:%S"
+}
+EOF
+
+# Update i3 config to use the new i3status config with proper bar configuration
+sed -i '/^bar {/,/^}/c\
+bar {\
+    status_command ~/.config/scripts/i3status-wrapper.py\
+    position top\
+    font pango:JetBrains Mono Nerd Font 12
+    separator_symbol " | "
+    colors {\
+        background $bg-color
+        separator $inactive-text-color
+        # border background text
+        focused_workspace $indicator-color $indicator-color $bg-color
+        inactive_workspace $inactive-bg-color $inactive-bg-color $inactive-text-color
+        active_workspace $inactive-bg-color $inactive-bg-color $text-color
+        urgent_workspace $urgent-bg-color $urgent-bg-color $text-color
+    }\
+}' ~/.config/i3/config</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="dmenu-config" class="section">
+            <h2><i class="fas fa-search"></i> dmenu Configuration</h2>
+            
+            <div class="command-block">
+                <h3>Enhanced dmenu Setup</h3>
+                <div class="code-container">
+                    <code># Create enhanced dmenu script without problematic options
+cat > ~/.config/scripts/dmenu_run.sh <<'EOF'
+#!/bin/bash
+dmenu_run -i \
+    -fn "JetBrains Mono Nerd Font:size=12" \
+    -nb "#282a36" \
+    -nf "#f8f8f2" \
+    -sb "#50fa7b" \
+    -sf "#282a36" \
+    -p "Run:"
+EOF
+chmod +x ~/.config/scripts/dmenu_run.sh && \
+
+# Update i3 config to use styled dmenu (replace existing binding)
+sed -i 's|bindsym $mod+d exec dmenu_run|bindsym $mod+d exec ~/.config/scripts/dmenu_run.sh|' ~/.config/i3/config && \
+
+# Create power menu with clean options
+cat > ~/.config/scripts/dmenu_power.sh <<'EOF'
+#!/bin/bash
+options="Lock
+Restart  
+Shutdown
+Logout
+Suspend"
+
+chosen=$(echo "$options" | dmenu -i \
+    -fn "JetBrains Mono Nerd Font:size=12" \
+    -nb "#282a36" \
+    -nf "#f8f8f2" \
+    -sb "#ff5555" \
+    -sf "#282a36" \
+    -p "Power:")
+
+case "$chosen" in
+    "Lock") i3lock -c 000000 ;;
+    "Restart") systemctl reboot ;;
+    "Shutdown") systemctl poweroff ;;
+    "Logout") i3-msg exit ;;
+    "Suspend") systemctl suspend ;;
+esac
+EOF
+chmod +x ~/.config/scripts/dmenu_power.sh && \
+
+# Add power menu keybinding
+echo 'bindsym $mod+Shift+p exec ~/.config/scripts/dmenu_power.sh' >> ~/.config/i3/config</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="picom-config" class="section">
+            <h2><i class="fas fa-magic"></i> Picom (Compositor) Configuration</h2>
+            
+            <div class="command-block">
+                <h3>Configure Visual Effects</h3>
+                <div class="code-container">
+                    <code>mkdir -p ~/.config/picom && \
+cat > ~/.config/picom/picom.conf <<'EOF'
+# Shadows
+shadow = true;
+shadow-radius = 7;
+shadow-offset-x = -7;
+shadow-offset-y = -7;
+shadow-opacity = 0.7;
+shadow-red = 0.0;
+shadow-green = 0.0;
+shadow-blue = 0.0;
+
+# Exclude shadows for some windows
+shadow-exclude = [
+  "name = 'Notification'",
+  "class_g = 'Conky'",
+  "class_g ?= 'Notify-osd'",
+  "class_g = 'Cairo-clock'",
+  "_GTK_FRAME_EXTENTS@:c"
+];
+
+# Opacity
+inactive-opacity = 0.95;
+active-opacity = 1.0;
+frame-opacity = 1.0;
+inactive-opacity-override = false;
+
+# Opacity rules for specific applications
+opacity-rule = [
+  "95:class_g = 'Alacritty' && focused",
+  "90:class_g = 'Alacritty' && !focused",
+  "95:class_g = 'Thunar' && focused",
+  "90:class_g = 'Thunar' && !focused",
+  "100:class_g = 'Firefox'",
+  "100:class_g = 'Spotify'",
+  "100:class_g = 'i3bar'",
+  "100:name *= 'i3lock'"
+];
+
+# Fading
+fading = true;
+fade-in-step = 0.03;
+fade-out-step = 0.03;
+fade-delta = 5;
+
+# Corners (subtle rounding)
+corner-radius = 6;
+rounded-corners-exclude = [
+  "window_type = 'dock'",
+  "window_type = 'desktop'"
+];
+
+# Background blurring (light blur for aesthetics)
+blur-background = true;
+blur-method = "dual_kawase";
+blur-strength = 3;
+blur-background-exclude = [
+  "window_type = 'dock'",
+  "window_type = 'desktop'",
+  "_GTK_FRAME_EXTENTS@:c"
+];
+
+# Other settings
+backend = "glx";
+vsync = true;
+mark-wmwin-focused = true;
+mark-ovredir-focused = true;
+detect-rounded-corners = true;
+detect-client-opacity = true;
+detect-transient = true;
+use-damage = true;
+log-level = "warn";
+
+wintypes:
+{
+  tooltip = { fade = true; shadow = true; opacity = 0.75; focus = true; full-shadow = false; };
+  dock = { shadow = false; clip-shadow-above = true; }
+  dnd = { shadow = false; }
+  popup_menu = { opacity = 0.95; }
+  dropdown_menu = { opacity = 0.95; }
+};
+EOF
+
+# Update i3 config to start picom automatically
+sed -i '/exec --no-startup-id ~\/.config\/scripts\/wallpaper.sh auto/a exec --no-startup-id picom --config ~/.config/picom/picom.conf' ~/.config/i3/config</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="alacritty-config" class="section">
+            <h2><i class="fas fa-terminal"></i> Alacritty Terminal Configuration</h2>
+            
+            <div class="command-block">
+                <h3>Enhanced Terminal Colors and Transparency</h3>
+                <div class="code-container">
+                    <code># Enhance Alacritty config with better colors and transparency
+cat > ~/.config/alacritty/alacritty.toml <<'EOF'
+[window]
+opacity = 0.95
+padding = { x = 8, y = 8 }
+decorations = "none"
+startup_mode = "Windowed"
+
+[font]
+normal = { family = "JetBrains Mono Nerd Font", style = "Regular" }
+bold = { family = "JetBrains Mono Nerd Font", style = "Bold" }
+italic = { family = "JetBrains Mono Nerd Font", style = "Italic" }
+size = 12
+
+[colors.primary]
+background = "#282a36"
+foreground = "#f8f8f2"
+
+[colors.cursor]
+text = "#282a36"
+cursor = "#f8f8f2"
+
+[colors.normal]
+black = "#21222c"
+red = "#ff5555"
+green = "#50fa7b"
+yellow = "#f1fa8c"
+blue = "#bd93f9"
+magenta = "#ff79c6"
+cyan = "#8be9fd"
+white = "#f8f8f2"
+
+[colors.bright]
+black = "#6272a4"
+red = "#ff6e6e"
+green = "#69ff94"
+yellow = "#ffffa5"
+blue = "#d6acff"
+magenta = "#ff92df"
+cyan = "#a4ffff"
+white = "#ffffff"
+
+[cursor.style]
+shape = "Block"
+blinking = "On"
+
+[scrolling]
+history = 10000
+EOF</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="i3-aesthetics" class="section">
+            <h2><i class="fas fa-palette"></i> i3 Aesthetics</h2>
+            
+            <div class="command-block">
+                <h3>Enhanced i3 Visual Configuration</h3>
+                <div class="code-container">
+                    <code># Backup current i3 config
+cp ~/.config/i3/config ~/.config/i3/config.backup && \
+
+# Add only essential aesthetics to i3 config (NO window-specific rules)
+cat >> ~/.config/i3/config <<'EOF'
+
+# Enhanced aesthetics
+for_window [class=".*"] border pixel 2
+gaps inner 8
+gaps outer 4
+
+# Color scheme (Dracula inspired)
+set $bg-color            #282a36
+set $inactive-bg-color   #44475a
+set $text-color          #f8f8f2
+set $inactive-text-color #6272a4
+set $urgent-bg-color     #ff5555
+set $indicator-color     #50fa7b
+
+# Window colors
+#                       border              background         text                 indicator
+client.focused          $indicator-color    $bg-color          $text-color          $indicator-color
+client.unfocused        $inactive-bg-color  $inactive-bg-color $inactive-text-color $inactive-bg-color
+client.focused_inactive $inactive-bg-color  $inactive-bg-color $inactive-text-color $inactive-bg-color
+client.urgent           $urgent-bg-color    $urgent-bg-color   $text-color          $urgent-bg-color
+EOF</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="notifications" class="section">
+            <h2><i class="fas fa-bell"></i> Notification System</h2>
+            
+            <div class="command-block">
+                <h3>Configure Dunst Notifications</h3>
+                <div class="code-container">
+                    <code>mkdir -p ~/.config/dunst && \
+cat > ~/.config/dunst/dunstrc <<'EOF'
+[global]
+monitor = 0
+follow = keyboard
+geometry = "300x50-20+20"
+indicate_hidden = yes
+shrink = no
+transparency = 10
+notification_height = 0
+separator_height = 2
+padding = 8
+horizontal_padding = 8
+frame_width = 2
+frame_color = "#50fa7b"
+separator_color = frame
+sort = yes
+idle_threshold = 120
+font = JetBrains Mono Nerd Font 11
+line_height = 0
+markup = full
+format = "<b>%s</b>\n%b"
+alignment = left
+show_age_threshold = 60
+word_wrap = yes
+ellipsize = middle
+ignore_newline = no
+stack_duplicates = true
+hide_duplicate_count = false
+show_indicators = yes
+icon_position = left
+max_icon_size = 32
+sticky_history = yes
+history_length = 20
+dmenu = dmenu -p dunst:
+browser = firefox
+always_run_script = true
+title = Dunst
+class = Dunst
+startup_notification = false
+verbosity = mesg
+corner_radius = 6
+
+[experimental]
+per_monitor_dpi = false
+
+[shortcuts]
+close = ctrl+space
+close_all = ctrl+shift+space
+history = ctrl+grave
+context = ctrl+shift+period
+
+[urgency_low]
+background = "#282a36"
+foreground = "#6272a4"
+timeout = 5
+icon = dialog-information
+
+[urgency_normal]
+background = "#282a36"
+foreground = "#f8f8f2"
+timeout = 10
+icon = dialog-information
+
+[urgency_critical]
+background = "#ff5555"
+foreground = "#f8f8f2"
+frame_color = "#ff5555"
+timeout = 0
+icon = dialog-warning
+EOF
+
+# Add dunst to i3 autostart
+sed -i '/exec --no-startup-id picom/a exec --no-startup-id dunst' ~/.config/i3/config</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="rice-setup" class="section">
+            <h2><i class="fas fa-sparkles"></i> Rice Setup Complete</h2>
+            
+            <div class="command-block">
+                <h3>Apply All Rice Configurations</h3>
+                <div class="code-container">
+                    <code># Reload i3 configuration
+i3-msg reload && \
+
+# Restart i3 to apply all changes  
+i3-msg restart && \
+
+# Start/restart all services
+killall picom dunst 2>/dev/null || true && \
+sleep 1 && \
+picom --config ~/.config/picom/picom.conf &
+dunst &
+
+# Set a random wallpaper
+~/.config/scripts/wallpaper.sh &
+
+# Show completion message
+notify-send "🎨 Rice Setup Complete" "Your minimalist i3 desktop is now configured!\n\nFeatures:\n• Enhanced i3status with system info\n• Styled dmenu with power menu\n• Subtle transparency with picom\n• Beautiful terminal colors\n• Notification system" && \
+
+echo "🎨 Rice configuration complete! Your setup now includes:"
+echo "   • Enhanced i3status with battery info, CPU/RAM usage at TOP"
+echo "   • Beautiful dmenu styling with working power management menu"
+echo "   • Subtle transparency effects with picom"
+echo "   • Dracula-inspired color scheme throughout"
+echo "   • Enhanced notifications with dunst"
+echo "   • Clean aesthetics without intrusive window rules"
+echo ""
+echo "💡 New keybindings added:"
+echo "   • $mod+Shift+p = Power menu (shutdown, restart, etc.)"
+echo ""
+echo "🔧 All configurations are in ~/.config/ and can be easily modified!"</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="final-steps" class="section">
+            <h2><i class="fas fa-flag-checkered"></i> Final System Reboot</h2>
+            
+            <div class="command-block">
+                <h3>Reboot System</h3>
+                <div class="code-container">
+                    <code>sudo reboot</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="network-management" class="section">
+            <h2><i class="fas fa-wifi"></i> Network Management</h2>
+            
+            <div class="command-block">
+                <h3>USB Ethernet Adapter Setup</h3>
+                <div class="code-container">
+                    <code># Check USB devices and network interfaces
+lsusb && ip link show
+
+# Check for USB ethernet adapter in system logs
+sudo dmesg | grep -i -E "(ax88179|usb|eth|enp3s0f3u1u1c2|cdc_ncm)" | tail -20
+
+# Load USB ethernet driver and restart networking
+sudo modprobe cdc_ncm && sudo systemctl restart NetworkManager
+
+# Test internet connectivity
+ping -c 3 google.com
+
+# Make USB ethernet driver persistent
+echo "cdc_ncm" | sudo tee /etc/modules-load.d/ethernet.conf</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="command-block">
+                <h3>WiFi Management Commands</h3>
+                <div class="code-container">
+                    <code># List available networks
+nmcli device wifi list
+
+# Connect to network
+nmcli device wifi connect "NETWORK_NAME" password "PASSWORD"
+
+# Connect to hidden network
+nmcli device wifi connect "NETWORK_NAME" password "PASSWORD" hidden yes
+
+# Disconnect
+nmcli device disconnect wlan0
+
+# Reconnect to saved network
+nmcli connection up "NETWORK_NAME"
+
+# Show saved connections
+nmcli connection show
+
+# Delete saved connection
+nmcli connection delete "NETWORK_NAME"
+
+# Show device status
+nmcli device status
+
+# Turn WiFi off/on
+nmcli radio wifi off
+nmcli radio wifi on
+
+# Restart NetworkManager
+sudo systemctl restart NetworkManager
+
+# Check NetworkManager logs
+journalctl -u NetworkManager --since "10 minutes ago"
+
+# Show WiFi interface info
+ip addr show wlan0
+
+# Show currently connected network
+nmcli device wifi list | grep '*'</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="bluetooth" class="section">
+            <h2><i class="fas fa-bluetooth-b"></i> Bluetooth Management</h2>
+            
+            <div class="command-block">
+                <h3>Bluetooth Setup and Management</h3>
+                <div class="code-container">
+                    <code># Enable and start Bluetooth service
+sudo systemctl enable bluetooth && sudo systemctl start bluetooth
+
+# Check Bluetooth status
+systemctl status bluetooth
+
+# List Bluetooth controllers
+bluetoothctl list
+
+# Enter Bluetooth control interface
+bluetoothctl
+
+# Inside bluetoothctl:
+power on
+agent on
+default-agent
+scan on
+
+# Stop scanning
+scan off
+
+# Pair with device
+pair XX:XX:XX:XX:XX:XX
+
+# Connect to device
+connect XX:XX:XX:XX:XX:XX
+
+# Trust device
+trust XX:XX:XX:XX:XX:XX
+
+# List paired devices
+devices
+
+# Exit bluetoothctl
+exit
+
+# Disconnect device
+bluetoothctl disconnect XX:XX:XX:XX:XX:XX
+
+# Remove device
+bluetoothctl remove XX:XX:XX:XX:XX:XX
+
+# Check if Bluetooth is blocked
+rfkill list
+
+# Unblock Bluetooth
+sudo rfkill unblock bluetooth
+
+# Restart Bluetooth service
+sudo systemctl restart bluetooth
+
+# Check Bluetooth logs
+journalctl -u bluetooth --since "10 minutes ago"</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="glossary" class="section">
+            <h2><i class="fas fa-book"></i> System Information & Reference Glossary</h2>
+            
+            <div class="glossary-grid">
+                <div class="glossary-item">
+                    <h3><i class="fas fa-keyboard"></i> Keyboard Shortcuts (i3 Window Manager)</h3>
+                    <div class="glossary-content">
+                        <p><strong>$mod = Super/Windows key</strong></p>
+                        <ul>
+                            <li>$mod + Enter = Open terminal (Alacritty)</li>
+                            <li>$mod + d = Application launcher (dmenu)</li>
+                            <li>$mod + Shift + q = Kill focused window</li>
+                            <li>$mod + Shift + c = Reload i3 config</li>
+                            <li>$mod + Shift + r = Restart i3</li>
+                            <li>$mod + Shift + e = Exit i3</li>
+                            <li>$mod + f = Toggle fullscreen</li>
+                            <li>$mod + s = Stacking layout</li>
+                            <li>$mod + w = Tabbed layout</li>
+                            <li>$mod + e = Split layout</li>
+                            <li>$mod + h = Split horizontal</li>
+                            <li>$mod + v = Split vertical</li>
+                            <li>$mod + 1-10 = Switch to workspace</li>
+                            <li>$mod + Shift + 1-10 = Move container to workspace</li>
+                            <li>$mod + Shift + Space = Toggle floating</li>
+                            <li>$mod + Space = Toggle focus floating/tiled</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-plus"></i> Custom Shortcuts Added</h3>
+                    <div class="glossary-content">
+                        <ul>
+                            <li>$mod + b = Firefox browser</li>
+                            <li>$mod + t = Thunar file manager</li>
+                            <li>$mod + m = Spotify music</li>
+                            <li>$mod + n = Neovim in workspace 5</li>
+                            <li>$mod + p = System monitor (btop)</li>
+                            <li>$mod + x = Lock screen (i3lock)</li>
+                            <li>$mod + Tab = Next workspace</li>
+                            <li>$mod + Shift + Tab = Previous workspace</li>
+                            <li>$mod + Shift + w = Random wallpaper</li>
+                            <li>$mod + Shift + p = Power menu</li>
+                            <li>Print Screen = Full screenshot to clipboard</li>
+                            <li>Shift + Print Screen = Selection screenshot to clipboard</li>
+                            <li>Brightness Up/Down = Adjust screen brightness with notification</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-battery-half"></i> Battery Management</h3>
+                    <div class="glossary-content">
+                        <h4>Check Battery Information</h4>
+                        <div class="code-container">
+                            <code># Battery status and health
+acpi -b
+acpi -i
+
+# Battery manufacturer and model (for replacement)
+sudo dmidecode -t 39
+
+# Power consumption
+powertop
+
+# TLP battery status
+sudo tlp-stat -b</code>
+                            <button class="copy-btn" onclick="copyToClipboard(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-laptop"></i> HP EliteBook 845 G8 Battery Specifications</h3>
+                    <div class="glossary-content">
+                        <ul>
+                            <li><strong>Battery Type:</strong> Lithium-ion (Li-ion)</li>
+                            <li><strong>Original Capacity:</strong> Typically 51Wh or 45Wh</li>
+                            <li><strong>Voltage:</strong> 11.55V</li>
+                            <li><strong>Part Numbers:</strong> Common HP part numbers include HS03, HS04, or HP Long Life</li>
+                            <li><strong>Replacement:</strong> Use genuine HP batteries or certified compatible ones</li>
+                        </ul>
+                        
+                        <h4>Battery Longevity Tips</h4>
+                        <ul>
+                            <li><strong>Optimal Charge Range:</strong> Keep between 20-80% for daily use</li>
+                            <li><strong>Storage:</strong> If storing laptop, keep battery at 50-60%</li>
+                            <li><strong>Temperature:</strong> Avoid extreme temperatures (keep 15-35°C)</li>
+                            <li><strong>Deep Discharge:</strong> Occasionally (monthly) discharge to 5% then full charge</li>
+                            <li><strong>Power Management:</strong> Use TLP for automatic battery optimization</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-terminal"></i> System Performance Commands</h3>
+                    <div class="glossary-content">
+                        <h4>Custom Scripts Created</h4>
+                        <ul>
+                            <li><code>update</code> - Update system and AUR packages</li>
+                            <li><code>debloat</code> - Clean system cache and temporary files</li>
+                            <li><code>performance</code> - Enable performance mode</li>
+                            <li><code>powersave</code> - Enable power saving mode</li>
+                            <li><code>boost</code> - Temporary performance boost</li>
+                            <li><code>boottime</code> - Analyze boot time and slow services</li>
+                            <li><code>diskhealth</code> - Check NVMe health and trim SSD</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-chart-line"></i> System Monitoring</h3>
+                    <div class="glossary-content">
+                        <div class="code-container">
+                            <code># CPU temperature and sensors
+sensors
+
+# System resources
+btop
+
+# Disk usage
+df -h
+ncdu
+
+# Memory usage
+free -h
+
+# GPU information (AMD)
+lspci | grep VGA
+glxinfo | grep -i vendor
+
+# Network usage
+nethogs
+iftop
+
+# Process monitoring
+ps aux
+pstree</code>
+                            <button class="copy-btn" onclick="copyToClipboard(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-microchip"></i> Hardware Specifications (HP EliteBook 845 G8)</h3>
+                    <div class="glossary-content">
+                        <h4>CPU</h4>
+                        <ul>
+                            <li><strong>Model:</strong> AMD Ryzen 5 PRO 5650U</li>
+                            <li><strong>Architecture:</strong> Zen 3 (7nm)</li>
+                            <li><strong>Cores:</strong> 6 cores / 12 threads</li>
+                            <li><strong>Base Clock:</strong> 2.3 GHz</li>
+                            <li><strong>Boost Clock:</strong> Up to 4.2 GHz</li>
+                            <li><strong>Cache:</strong> 16 MB L3</li>
+                            <li><strong>TDP:</strong> 15W (configurable to 25W)</li>
+                        </ul>
+
+                        <h4>Memory</h4>
+                        <ul>
+                            <li><strong>RAM:</strong> 16 GB DDR4-3200 SDRAM</li>
+                            <li><strong>Type:</strong> SO-DIMM</li>
+                            <li><strong>Upgradeable:</strong> Check if dual-channel or single slot</li>
+                        </ul>
+
+                        <h4>Storage</h4>
+                        <ul>
+                            <li><strong>Primary:</strong> 512 GB PCIe NVMe SSD</li>
+                            <li><strong>Interface:</strong> M.2 2280</li>
+                            <li><strong>Type:</strong> Typically TLC NAND</li>
+                            <li><strong>Device:</strong> /dev/nvme0n1</li>
+                        </ul>
+
+                        <h4>Graphics</h4>
+                        <ul>
+                            <li><strong>iGPU:</strong> AMD Radeon Graphics (Integrated)</li>
+                            <li><strong>Architecture:</strong> Vega 7</li>
+                            <li><strong>Driver:</strong> AMDGPU (open-source)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-folder-tree"></i> File System Structure</h3>
+                    <div class="glossary-content">
+                        <ul>
+                            <li>/dev/nvme0n1p1 → /boot/efi (FAT32, EFI System Partition)</li>
+                            <li>/dev/nvme0n1p2 → [SWAP] (Linux swap)</li>
+                            <li>/dev/nvme0n1p3 → / (ext4, Root partition)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-network-wired"></i> System Components</h3>
+                    <div class="glossary-content">
+                        <h4>Network Interfaces</h4>
+                        <ul>
+                            <li><strong>WiFi:</strong> wlan0</li>
+                            <li><strong>Ethernet:</strong> (via USB adapter) typically enp*</li>
+                            <li><strong>Bluetooth:</strong> Available with bluez</li>
+                        </ul>
+
+                        <h4>Audio System</h4>
+                        <ul>
+                            <li><strong>Framework:</strong> PipeWire</li>
+                            <li><strong>Services:</strong> pipewire, pipewire-pulse, wireplumber</li>
+                            <li><strong>Controls:</strong> alsamixer, pavucontrol (if installed)</li>
+                        </ul>
+
+                        <h4>Power Management</h4>
+                        <ul>
+                            <li><strong>TLP:</strong> Battery optimization daemon</li>
+                            <li><strong>AMD P-State:</strong> Active (processor.max_cstate=1 amd_pstate=active)</li>
+                            <li><strong>CPU Governor:</strong> Performance (set by cpu-performance.service)</li>
+                            <li><strong>Brightness Control:</strong> brightnessctl</li>
+                        </ul>
+
+                        <h4>Security</h4>
+                        <ul>
+                            <li><strong>Firewall:</strong> UFW (Uncomplicated Firewall)</li>
+                            <li><strong>Default Policy:</strong> Deny incoming, allow outgoing</li>
+                            <li><strong>User Groups:</strong> sid user added to: audio,video,input,storage,power,rfkill,sys,adm,disk</li>
+                        </ul>
+
+                        <h4>Font Configuration</h4>
+                        <ul>
+                            <li><strong>Terminal Font:</strong> JetBrains Mono Nerd Font 12pt</li>
+                            <li><strong>System Fonts:</strong> Noto Fonts (with emoji and CJK support)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-tools"></i> Troubleshooting Commands</h3>
+                    <div class="glossary-content">
+                        <div class="code-container">
+                            <code># Check system logs
+journalctl -p 3 -xb
+
+# Hardware detection
+sudo lshw -short
+
+# PCI devices
+lspci -v
+
+# USB devices
+lsusb -v
+
+# Module information
+lsmod
+modinfo <module_name>
+
+# Service status
+systemctl status <service_name>
+
+# Network debugging
+ip addr
+ip route
+ping -c 3 8.8.8.8</code>
+                            <button class="copy-btn" onclick="copyToClipboard(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glossary-item">
+                    <h3><i class="fas fa-save"></i> Backup Important Files</h3>
+                    <div class="glossary-content">
+                        <h4>Configuration Files to Backup</h4>
+                        <ul>
+                            <li>~/.config/i3/config</li>
+                            <li>~/.config/alacritty/alacritty.toml</li>
+                            <li>~/.xinitrc</li>
+                            <li>~/.bashrc or ~/.zshrc</li>
+                            <li>~/.config/scripts/</li>
+                            <li>/etc/fstab</li>
+                            <li>/etc/hosts</li>
+                            <li>Custom scripts in /usr/local/bin/</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Arch Linux Installation Guide. Complete installation and rice configuration.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -3553,8 +3553,7 @@ opt.secure = true</code>
             <div class="command-block">
                 <h3>Configure Keymaps.lua</h3>
                 <div class="code-container">
-                    <code># Configure custom keymaps
--- ~/.config/nvim/lua/config/keymaps.lua
+                    <code>-- ~/.config/nvim/lua/config/keymaps.lua
 local keymap = vim.keymap
 
 -- Better window navigation
@@ -3577,12 +3576,14 @@ keymap.set("n", "<S-h>", ":bprevious<CR>", { desc = "Previous buffer" })
 keymap.set("n", "<leader>h", ":nohlsearch<CR>", { desc = "Clear search highlighting" })
 
 -- Better indenting
-keymap.set("v", "<", "<gv", { desc = "Indent left" })
-keymap.set("v", ">", ">gv", { desc = "Indent right" })
+local lt = "<"
+local gt = ">"
+keymap.set("v", lt, lt .. "gv", { desc = "Indent left" })
+keymap.set("v", gt, gt .. "gv", { desc = "Indent right" })
 
 -- Move text up and down
-keymap.set("v", "J", ":move '>+1<CR>gv-gv", { desc = "Move text down" })
-keymap.set("v", "K", ":move '<-2<CR>gv-gv", { desc = "Move text up" })
+keymap.set("v", "J", ":move '>+1<CR>gv=gv", { desc = "Move text down" })
+keymap.set("v", "K", ":move '<-2<CR>gv=gv", { desc = "Move text up" })
 
 -- Development specific
 keymap.set("n", "<leader>rr", ":!make<CR>", { desc = "Run make" })
@@ -3606,8 +3607,7 @@ keymap.set("n", "<leader>dc", ":lua require('dap').continue()<CR>", { desc = "Co
             <div class="command-block">
                 <h3>Configure Autocmds.lua</h3>
                 <div class="code-container">
-                    <code># Configure auto commands
--- ~/.config/nvim/lua/config/autocmds.lua
+                    <code>-- ~/.config/nvim/lua/config/autocmds.lua
 local autocmd = vim.api.nvim_create_autocmd
 local augroup = vim.api.nvim_create_augroup
 
@@ -3705,8 +3705,7 @@ touch tools.lua</code>
             <div class="command-block">
                 <h3>Configure Nord Theme Plugin</h3>
                 <div class="code-container">
-                    <code># Configure Nord theme
--- ~/.config/nvim/lua/plugins/nord.lua
+                    <code>-- ~/.config/nvim/lua/plugins/nord.lua
 return {
   {
     "shaunsingh/nord.nvim",
@@ -3756,8 +3755,7 @@ return {
             <div class="command-block">
                 <h3>Configure Lazy.lua Imports</h3>
                 <div class="code-container">
-                    <code># Add language support and extras to lazy.lua
-{ import = "lazyvim.plugins.extras.lang.clangd" },    -- C/C++ support
+                    <code>{ import = "lazyvim.plugins.extras.lang.clangd" },    -- C/C++ support
 { import = "lazyvim.plugins.extras.lang.python" },    -- Python support
 { import = "lazyvim.plugins.extras.editor.telescope" }, -- Better file finder
 { import = "lazyvim.plugins.extras.ui.mini-animate" }, -- Smooth animations</code>
@@ -3775,8 +3773,7 @@ return {
             <div class="command-block">
                 <h3>Configure LSP Settings</h3>
                 <div class="code-container">
-                    <code># Configure Language Server Protocol
--- ~/.config/nvim/lua/plugins/lsp.lua
+                    <code>-- ~/.config/nvim/lua/plugins/lsp.lua
 return {
   {
     "neovim/nvim-lspconfig",
@@ -3845,8 +3842,7 @@ return {
             <div class="command-block">
                 <h3>Configure Development Tools</h3>
                 <div class="code-container">
-                    <code># Configure development tools and utilities
--- ~/.config/nvim/lua/plugins/tools.lua
+                    <code>-- ~/.config/nvim/lua/plugins/tools.lua
 return {
   -- Better syntax highlighting
   {

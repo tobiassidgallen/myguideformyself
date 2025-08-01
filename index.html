@@ -3539,7 +3539,11 @@ opt.pumheight = 10
 
 -- Security for embedded development
 opt.modeline = false
-opt.secure = true</code>
+opt.secure = true
+
+-- Focus and concentration
+opt.conceallevel = 2
+opt.concealcursor = "nc"</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">
                         <i class="fas fa-copy"></i>
                     </button>
@@ -3593,7 +3597,27 @@ keymap.set("n", "<leader>rp", ":!python %<CR>", { desc = "Run Python" })
 
 -- Debugging
 keymap.set("n", "<leader>db", ":lua require('dap').toggle_breakpoint()<CR>", { desc = "Toggle breakpoint" })
-keymap.set("n", "<leader>dc", ":lua require('dap').continue()<CR>", { desc = "Continue debugging" })</code>
+keymap.set("n", "<leader>dc", ":lua require('dap').continue()<CR>", { desc = "Continue debugging" })
+keymap.set("n", "<leader>ds", ":lua require('dap').step_over()<CR>", { desc = "Step over" })
+keymap.set("n", "<leader>di", ":lua require('dap').step_into()<CR>", { desc = "Step into" })
+keymap.set("n", "<leader>do", ":lua require('dap').step_out()<CR>", { desc = "Step out" })
+
+-- Focus and zen mode
+keymap.set("n", "<leader>zz", ":ZenMode<CR>", { desc = "Toggle Zen Mode" })
+keymap.set("n", "<leader>zt", ":Twilight<CR>", { desc = "Toggle Twilight" })
+
+-- Quick navigation
+keymap.set("n", "<leader>jj", ":HopWord<CR>", { desc = "Hop to word" })
+keymap.set("n", "<leader>jl", ":HopLine<CR>", { desc = "Hop to line" })
+keymap.set("n", "<leader>jc", ":HopChar1<CR>", { desc = "Hop to character" })
+
+-- Terminal
+keymap.set("n", "<C-\\>", ":ToggleTerm<CR>", { desc = "Toggle terminal" })
+keymap.set("t", "<C-\\>", "<C-\\><C-n>:ToggleTerm<CR>", { desc = "Toggle terminal" })
+
+-- Search and replace
+keymap.set("n", "<leader>sr", ":lua require('spectre').open()<CR>", { desc = "Search and Replace" })
+keymap.set("n", "<leader>sw", ":lua require('spectre').open_visual({select_word=true})<CR>", { desc = "Search current word" })</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">
                         <i class="fas fa-copy"></i>
                     </button>
@@ -3632,6 +3656,16 @@ autocmd("TextYankPost", {
   desc = "Highlight yanked text",
 })
 
+-- Auto-close certain file types
+autocmd("FileType", {
+  group = general,
+  pattern = { "qf", "help", "man", "lspinfo", "spectre_panel" },
+  callback = function(event)
+    vim.bo[event.buf].buflisted = false
+    vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = event.buf, silent = true })
+  end,
+})
+
 -- Language-specific settings
 local lang_settings = augroup("LanguageSettings", { clear = true })
 
@@ -3644,6 +3678,7 @@ autocmd("FileType", {
     vim.opt_local.shiftwidth = 4
     vim.opt_local.expandtab = true
     vim.opt_local.cindent = true
+    vim.opt_local.commentstring = "// %s"
     -- Add include path for embedded development
     vim.opt_local.path:append("/usr/include,/usr/local/include")
   end,
@@ -3670,8 +3705,21 @@ autocmd("FileType", {
   callback = function()
     vim.opt_local.wrap = true
     vim.opt_local.spell = true
+    vim.opt_local.conceallevel = 2
   end,
   desc = "Markdown settings",
+})
+
+-- HTML/CSS/JS settings
+autocmd("FileType", {
+  group = lang_settings,
+  pattern = { "html", "css", "javascript", "json" },
+  callback = function()
+    vim.opt_local.tabstop = 2
+    vim.opt_local.shiftwidth = 2
+    vim.opt_local.expandtab = true
+  end,
+  desc = "Web development settings",
 })</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">
                         <i class="fas fa-copy"></i>
@@ -3689,9 +3737,7 @@ autocmd("FileType", {
                 <div class="code-container">
                     <code># Navigate to plugins directory and create files
 cd ~/.config/nvim/lua/plugins/
-touch nord.lua
-touch lsp.lua
-touch tools.lua</code>
+touch nord.lua && touch lsp.lua && touch tools.lua && touch focus.lua && touch productivity.lua</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">
                         <i class="fas fa-copy"></i>
                     </button>
@@ -3732,6 +3778,7 @@ return {
         highlight SignColumn guibg=#2e3440
         highlight Pmenu guibg=#3b4252 guifg=#d8dee9
         highlight PmenuSel guibg=#88c0d0 guifg=#2e3440
+        highlight TwilightDimmed guifg=#4c566a
       ]])
     end,
   },
@@ -3756,9 +3803,236 @@ return {
                 <h3>Configure Lazy.lua Imports</h3>
                 <div class="code-container">
                     <code>{ import = "lazyvim.plugins.extras.lang.clangd" },    -- C/C++ support
-{ import = "lazyvim.plugins.extras.lang.python" },    -- Python support
-{ import = "lazyvim.plugins.extras.editor.telescope" }, -- Better file finder
-{ import = "lazyvim.plugins.extras.ui.mini-animate" }, -- Smooth animations</code>
+  { import = "lazyvim.plugins.extras.lang.python" },    -- Python support
+  { import = "lazyvim.plugins.extras.editor.telescope" }, -- Better file finder
+  { import = "lazyvim.plugins.extras.ui.mini-animate" }, -- Smooth animations
+  { import = "lazyvim.plugins.extras.util.mini-hipatterns" }, -- Better highlighting</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <section id="lazyvim-lazy" class="section">
+            <h2><i class="fas fa-rocket"></i> 10. Configure Focus & Zen Mode</h2>
+            
+            <div class="command-block">
+                <h3>Configure Lazy.lua Imports</h3>
+                <div class="code-container">
+                    <code>-- ~/.config/nvim/lua/plugins/focus.lua
+return {
+  -- Focus and zen mode for distraction-free coding
+  {
+    "folke/twilight.nvim",
+    opts = {
+      dimming = {
+        alpha = 0.25, -- Amount of dimming
+        color = { "Normal", "#ffffff" },
+        term_bg = "#000000",
+        inactive = true,
+      },
+      context = 10, -- Amount of lines to show around cursor
+      treesitter = true,
+      expand = { -- Expand certain elements
+        "function",
+        "method",
+        "table",
+        "if_statement",
+      },
+    },
+  },
+  {
+    "folke/zen-mode.nvim",
+    opts = {
+      window = {
+        backdrop = 0.95,
+        width = 120,
+        height = 1,
+        options = {
+          signcolumn = "no",
+          number = false,
+          relativenumber = false,
+          cursorline = false,
+          cursorcolumn = false,
+          foldcolumn = "0",
+          list = false,
+        },
+      },
+      plugins = {
+        options = {
+          enabled = true,
+          ruler = false,
+          showcmd = false,
+        },
+        twilight = { enabled = true },
+        gitsigns = { enabled = false },
+        tmux = { enabled = false },
+      },
+    },
+  },
+}</code>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <section id="lazyvim-lazy" class="section">
+            <h2><i class="fas fa-rocket"></i> 11. Configure Productivity Plugins</h2>
+            
+            <div class="command-block">
+                <h3>Configure Lazy.lua Imports</h3>
+                <div class="code-container">
+                    <code>-- ~/.config/nvim/lua/plugins/productivity.lua
+return {
+  -- Surround text objects (essential!)
+  {
+    "kylechui/nvim-surround",
+    version = "*",
+    event = "VeryLazy",
+    config = function()
+      require("nvim-surround").setup({})
+    end,
+  },
+
+  -- Which-key for discovering keybindings
+  {
+    "folke/which-key.nvim",
+    event = "VeryLazy",
+    opts = {
+      plugins = { spelling = true },
+      spec = {
+        {
+          mode = { "n", "v" },
+          { "g", group = "goto" },
+          { "gz", group = "surround" },
+          { "]", group = "next" },
+          { "[", group = "prev" },
+          { "<leader><tab>", group = "tabs" },
+          { "<leader>b", group = "buffer" },
+          { "<leader>c", group = "code" },
+          { "<leader>f", group = "file/find" },
+          { "<leader>g", group = "git" },
+          { "<leader>gh", group = "hunks" },
+          { "<leader>q", group = "quit/session" },
+          { "<leader>s", group = "search" },
+          { "<leader>u", group = "ui" },
+          { "<leader>w", group = "windows" },
+          { "<leader>x", group = "diagnostics/quickfix" },
+          { "<leader>z", group = "zen/focus" },
+          { "<leader>r", group = "run/execute" },
+          { "<leader>d", group = "debug" },
+          { "<leader>j", group = "jump/hop" },
+        },
+      },
+    },
+  },
+
+  -- Quick navigation with hop
+  {
+    "phaazon/hop.nvim",
+    branch = "v2",
+    config = function()
+      require("hop").setup({ keys = "etovxqpdygfblzhckisuran" })
+    end,
+  },
+
+  -- Auto pairs for brackets and quotes
+  {
+    "windwp/nvim-autopairs",
+    event = "InsertEnter",
+    opts = {},
+  },
+
+  -- Enhanced commenting
+  {
+    "numToStr/Comment.nvim",
+    opts = {},
+    lazy = false,
+  },
+
+  -- Global search and replace
+  {
+    "nvim-pack/nvim-spectre",
+    build = false,
+    cmd = "Spectre",
+    opts = { open_cmd = "noswapfile vnew" },
+  },
+
+  -- Session management
+  {
+    "folke/persistence.nvim",
+    event = "BufReadPre",
+    opts = { options = vim.opt.sessionoptions:get() },
+  },
+
+  -- Enhanced text objects
+  {
+    "echasnovski/mini.ai",
+    opts = function()
+      local ai = require("mini.ai")
+      return {
+        n_lines = 500,
+        custom_textobjects = {
+          o = ai.gen_spec.treesitter({
+            a = { "@block.outer", "@conditional.outer", "@loop.outer" },
+            i = { "@block.inner", "@conditional.inner", "@loop.inner" },
+          }, {}),
+          f = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }, {}),
+          c = ai.gen_spec.treesitter({ a = "@class.outer", i = "@class.inner" }, {}),
+          t = { "<([%p%w]-)%f[^<%w][^<>]->.-</%1>", "^<.->().*()</[^/]->$" },
+        },
+      }
+    end,
+  },
+
+  -- Color highlighter
+  {
+    "NvChad/nvim-colorizer.lua",
+    opts = {
+      filetypes = { "*" },
+      user_default_options = {
+        RGB = true,
+        RRGGBB = true,
+        names = true,
+        RRGGBBAA = false,
+        AARRGGBB = true,
+        rgb_fn = false,
+        hsl_fn = false,
+        css = false,
+        css_fn = false,
+        mode = "background",
+        tailwind = false,
+        sass = { enable = false },
+        virtualtext = "■",
+      },
+    },
+  },
+
+  -- TODO comments highlighting
+  {
+    "folke/todo-comments.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    opts = {
+      signs = true,
+      sign_priority = 8,
+      keywords = {
+        FIX = { icon = " ", color = "error", alt = { "FIXME", "BUG", "FIXIT", "ISSUE" } },
+        TODO = { icon = " ", color = "info" },
+        HACK = { icon = " ", color = "warning" },
+        WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
+        PERF = { icon = " ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
+        NOTE = { icon = " ", color = "hint", alt = { "INFO" } },
+        TEST = { icon = "⏲ ", color = "test", alt = { "TESTING", "PASSED", "FAILED" } },
+        SECURITY = { icon = "🔒", color = "error", alt = { "SEC", "VULN", "VULNERABILITY" } },
+      },
+    },
+  },
+}</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">
                         <i class="fas fa-copy"></i>
                     </button>
@@ -3768,15 +4042,24 @@ return {
         </section>
 
         <section id="lazyvim-lsp" class="section">
-            <h2><i class="fas fa-language"></i> 10. Configure LSP Settings</h2>
+            <h2><i class="fas fa-language"></i> 12. Configure LSP Settings</h2>
             
             <div class="command-block">
                 <h3>Configure LSP Settings</h3>
                 <div class="code-container">
                     <code>-- ~/.config/nvim/lua/plugins/lsp.lua
 return {
+  -- Schema store for JSON/YAML - loaded first
+  {
+    "b0o/schemastore.nvim",
+    lazy = false,
+  },
+
   {
     "neovim/nvim-lspconfig",
+    dependencies = {
+      "b0o/schemastore.nvim",
+    },
     opts = {
       servers = {
         -- C/C++ Language Server
@@ -3789,6 +4072,8 @@ return {
             "--completion-style=detailed",
             "--function-arg-placeholders",
             "--fallback-style=llvm",
+            "--cross-file-rename",
+            "--compile-commands-dir=build",
           },
           init_options = {
             usePlaceholders = true,
@@ -3796,6 +4081,19 @@ return {
             clangdFileStatus = true,
           },
           filetypes = { "c", "cpp", "objc", "objcpp" },
+          root_dir = function(fname)
+            return require("lspconfig.util").root_pattern(
+              "Makefile",
+              "configure.ac",
+              "configure.in",
+              "config.h.in",
+              "meson.build",
+              "meson_options.txt",
+              "build.ninja"
+            )(fname) or require("lspconfig.util").root_pattern("compile_commands.json", "compile_flags.txt")(
+              fname
+            ) or require("lspconfig.util").root_pattern(fname)
+          end,
         },
 
         -- Python Language Server
@@ -3807,12 +4105,14 @@ return {
                 autoSearchPaths = true,
                 useLibraryCodeForTypes = true,
                 autoImportCompletions = true,
+                diagnosticMode = "workspace",
+                stubPath = vim.fn.stdpath("data") .. "/lazy/python-type-stubs",
               },
             },
           },
         },
 
-        -- Optional: Lua for Neovim config
+        -- Lua for Neovim config
         lua_ls = {
           settings = {
             Lua = {
@@ -3822,9 +4122,74 @@ return {
               completion = {
                 callSnippet = "Replace",
               },
+              diagnostics = {
+                globals = { "vim" },
+              },
             },
           },
         },
+
+        -- JSON support with safe schemastore loading
+        jsonls = {
+          settings = {
+            json = {
+              schemas = (function()
+                local ok, schemastore = pcall(require, "schemastore")
+                if ok then
+                  return schemastore.json.schemas()
+                end
+                return {}
+              end)(),
+              validate = { enable = true },
+            },
+          },
+        },
+
+        -- YAML support with safe schemastore loading
+        yamlls = {
+          settings = {
+            yaml = {
+              schemaStore = {
+                enable = false,
+                url = "",
+              },
+              schemas = (function()
+                local ok, schemastore = pcall(require, "schemastore")
+                if ok then
+                  return schemastore.yaml.schemas()
+                end
+                return {}
+              end)(),
+            },
+          },
+        },
+      },
+    },
+  },
+
+  -- Trouble for diagnostics
+  {
+    "folke/trouble.nvim",
+    opts = {
+      use_diagnostic_signs = true,
+      action_keys = {
+        close = "q",
+        cancel = "<esc>",
+        refresh = "r",
+        jump = { "<cr>", "<tab>" },
+        open_split = { "<c-x>" },
+        open_vsplit = { "<c-v>" },
+        open_tab = { "<c-t>" },
+        jump_close = { "o" },
+        toggle_mode = "m",
+        toggle_preview = "P",
+        hover = "K",
+        preview = "p",
+        close_folds = { "zM", "zm" },
+        open_folds = { "zR", "zr" },
+        toggle_fold = { "zA", "za" },
+        previous = "k",
+        next = "j",
       },
     },
   },
@@ -3837,7 +4202,7 @@ return {
         </section>
 
         <section id="lazyvim-tools" class="section">
-            <h2><i class="fas fa-tools"></i> 11. Configure Development Tools</h2>
+            <h2><i class="fas fa-tools"></i> 13. Configure Development Tools</h2>
             
             <div class="command-block">
                 <h3>Configure Development Tools</h3>
@@ -3854,20 +4219,57 @@ return {
         "python",
         "lua",
         "vim",
+        "vimdoc",
         "markdown",
+        "markdown_inline",
         "json",
         "yaml",
         "bash",
         "make",
         "cmake",
         "dockerfile",
+        "html",
+        "css",
+        "javascript",
+        "regex",
+        "toml",
+        "git_config",
+        "git_rebase",
+        "gitcommit",
+        "gitignore",
+        "diff",
       },
       highlight = { enable = true },
       indent = { enable = true },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = "<C-space>",
+          node_incremental = "<C-space>",
+          scope_incremental = false,
+          node_decremental = "<bs>",
+        },
+      },
     },
   },
 
-  -- Code completion
+  -- Show function context
+  {
+    "nvim-treesitter/nvim-treesitter-context",
+    opts = {
+      enable = true,
+      max_lines = 3,
+      min_window_height = 0,
+      line_numbers = true,
+      multiline_threshold = 20,
+      trim_scope = "outer",
+      mode = "cursor",
+      separator = nil,
+      zindex = 20,
+    },
+  },
+
+  -- Enhanced code completion
   {
     "hrsh7th/nvim-cmp",
     dependencies = {
@@ -3875,9 +4277,88 @@ return {
       "hrsh7th/cmp-buffer",
       "hrsh7th/cmp-path",
       "hrsh7th/cmp-cmdline",
+      "hrsh7th/cmp-nvim-lsp-signature-help",
       "L3MON4D3/LuaSnip",
       "saadparwaiz1/cmp_luasnip",
+      "rafamadriz/friendly-snippets",
     },
+    opts = function(_, opts)
+      local cmp = require("cmp")
+      local luasnip = require("luasnip")
+
+      -- Load friendly snippets
+      require("luasnip.loaders.from_vscode").lazy_load()
+
+      opts.sources = cmp.config.sources({
+        { name = "nvim_lsp", priority = 1000 },
+        { name = "luasnip", priority = 750 },
+        { name = "nvim_lsp_signature_help", priority = 700 },
+        { name = "buffer", priority = 500 },
+        { name = "path", priority = 250 },
+      })
+
+      opts.mapping = cmp.mapping.preset.insert({
+        ["<C-k>"] = cmp.mapping.select_prev_item(),
+        ["<C-j>"] = cmp.mapping.select_next_item(),
+        ["<C-b>"] = cmp.mapping.scroll_docs(-4),
+        ["<C-f>"] = cmp.mapping.scroll_docs(4),
+        ["<C-Space>"] = cmp.mapping.complete(),
+        ["<C-e>"] = cmp.mapping.abort(),
+        ["<CR>"] = cmp.mapping.confirm({ select = true }),
+        ["<Tab>"] = cmp.mapping(function(fallback)
+          if cmp.visible() then
+            cmp.select_next_item()
+          elseif luasnip.expand_or_jumpable() then
+            luasnip.expand_or_jump()
+          else
+            fallback()
+          end
+        end, { "i", "s" }),
+        ["<S-Tab>"] = cmp.mapping(function(fallback)
+          if cmp.visible() then
+            cmp.select_prev_item()
+          elseif luasnip.jumpable(-1) then
+            luasnip.jump(-1)
+          else
+            fallback()
+          end
+        end, { "i", "s" }),
+      })
+
+      return opts
+    end,
+  },
+
+  -- Enhanced snippets with VS Code style snippets
+  {
+    "L3MON4D3/LuaSnip",
+    dependencies = {
+      "rafamadriz/friendly-snippets",
+    },
+    config = function()
+      require("luasnip.loaders.from_vscode").lazy_load()
+      -- Custom snippets
+      local ls = require("luasnip")
+      local s = ls.snippet
+      local t = ls.text_node
+      local i = ls.insert_node
+
+      ls.add_snippets("c", {
+        s("main", {
+          t({"#include <stdio.h>", "", "int main() {", "    "}),
+          i(1, "// Your code here"),
+          t({"", "    return 0;", "}"}),
+        }),
+      })
+
+      ls.add_snippets("cpp", {
+        s("main", {
+          t({"#include <iostream>", "", "int main() {", "    "}),
+          i(1, "// Your code here"),
+          t({"", "    return 0;", "}"}),
+        }),
+      })
+    end,
   },
 
   -- File explorer
@@ -3888,7 +4369,20 @@ return {
         filtered_items = {
           hide_dotfiles = false,
           hide_gitignored = false,
+          hide_by_name = {
+            ".git",
+            ".DS_Store",
+            "thumbs.db",
+          },
         },
+        follow_current_file = {
+          enabled = true,
+        },
+        use_libuv_file_watcher = true,
+      },
+      window = {
+        position = "left",
+        width = 30,
       },
     },
   },
@@ -3905,7 +4399,21 @@ return {
         changedelete = { text = "▎" },
         untracked = { text = "▎" },
       },
+      current_line_blame = true,
+      current_line_blame_opts = {
+        virt_text = true,
+        virt_text_pos = "eol",
+        delay = 1000,
+        ignore_whitespace = false,
+      },
     },
+  },
+
+  -- Enhanced git workflow
+  {
+    "sindrets/diffview.nvim",
+    cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewToggleFiles", "DiffviewFocusFiles" },
+    opts = {},
   },
 
   -- Debugging (DAP)
@@ -3919,6 +4427,95 @@ return {
     config = function()
       local dap = require("dap")
       local dapui = require("dapui")
+
+      -- Setup DAP UI
+      dapui.setup({
+        icons = { expanded = "▾", collapsed = "▸", current_frame = "*" },
+        mappings = {
+          expand = { "<CR>", "<2-LeftMouse>" },
+          open = "o",
+          remove = "d",
+          edit = "e",
+          repl = "r",
+          toggle = "t",
+        },
+        expand_lines = vim.fn.has("nvim-0.7") == 1,
+        layouts = {
+          {
+            elements = {
+              { id = "scopes", size = 0.25 },
+              "breakpoints",
+              "stacks",
+              "watches",
+            },
+            size = 40,
+            position = "left",
+          },
+          {
+            elements = {
+              "repl",
+              "console",
+            },
+            size = 0.25,
+            position = "bottom",
+          },
+        },
+        controls = {
+          enabled = true,
+          element = "repl",
+          icons = {
+            pause = "",
+            play = "",
+            step_into = "",
+            step_over = "",
+            step_out = "",
+            step_back = "",
+            run_last = "↻",
+            terminate = "□",
+          },
+        },
+        floating = {
+          max_height = nil,
+          max_width = nil,
+          border = "single",
+          mappings = {
+            close = { "q", "<Esc>" },
+          },
+        },
+        windows = { indent = 1 },
+        render = {
+          max_type_length = nil,
+          max_value_lines = 100,
+        },
+      })
+
+      -- Setup virtual text
+      require("nvim-dap-virtual-text").setup({
+        enabled = true,
+        enabled_commands = true,
+        highlight_changed_variables = true,
+        highlight_new_as_changed = false,
+        show_stop_reason = true,
+        commented = false,
+        only_first_definition = true,
+        all_references = false,
+        filter_references_pattern = "<module",
+        virt_text_pos = "eol",
+        all_frames = false,
+        virt_lines = false,
+        virt_text_win_col = nil,
+      })
+
+      -- Auto open/close DAP UI
+      dap.listeners.after.event_initialized["dapui_config"] = function()
+        dapui.open()
+      end
+      dap.listeners.before.event_terminated["dapui_config"] = function()
+        dapui.close()
+      end
+      dap.listeners.before.event_exited["dapui_config"] = function()
+        dapui.close()
+      end
 
       -- C/C++ debugging with GDB
       dap.adapters.gdb = {
@@ -3938,8 +4535,17 @@ return {
           cwd = "${workspaceFolder}",
           stopAtBeginningOfMainSubprogram = false,
         },
+        {
+          name = "Attach to gdbserver :1234",
+          type = "gdb",
+          request = "attach",
+          target = "localhost:1234",
+          program = function()
+            return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+          end,
+          cwd = "${workspaceFolder}",
+        },
       }
-
       dap.configurations.cpp = dap.configurations.c
 
       -- Python debugging
@@ -3959,9 +4565,20 @@ return {
             return "/usr/bin/python"
           end,
         },
+        {
+          type = "python",
+          request = "launch",
+          name = "Launch file with arguments",
+          program = "${file}",
+          args = function()
+            local args_string = vim.fn.input('Arguments: ')
+            return vim.split(args_string, " ")
+          end,
+          pythonPath = function()
+            return "/usr/bin/python"
+          end,
+        },
       }
-
-      dapui.setup()
     end,
   },
 
@@ -3974,7 +4591,54 @@ return {
         open_mapping = [[<c-\>]],
         direction = "horizontal",
         shell = vim.o.shell,
+        float_opts = {
+          border = "curved",
+          winblend = 0,
+          highlights = {
+            border = "Normal",
+            background = "Normal",
+          },
+        },
       })
+
+      -- Custom terminal functions
+      local Terminal = require("toggleterm.terminal").Terminal
+
+      -- Lazygit terminal
+      local lazygit = Terminal:new({
+        cmd = "lazygit",
+        dir = "git_dir",
+        direction = "float",
+        float_opts = {
+          border = "double",
+        },
+        on_open = function(term)
+          vim.cmd("startinsert!")
+          vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", {noremap = true, silent = true})
+        end,
+        on_close = function(term)
+          vim.cmd("startinsert!")
+        end,
+      })
+
+      function _LAZYGIT_TOGGLE()
+        lazygit:toggle()
+      end
+
+      -- Python REPL
+      local python = Terminal:new({
+        cmd = "python",
+        direction = "horizontal",
+        close_on_exit = false,
+      })
+
+      function _PYTHON_TOGGLE()
+        python:toggle()
+      end
+
+      -- Add keymaps
+      vim.keymap.set("n", "<leader>gg", "<cmd>lua _LAZYGIT_TOGGLE()<CR>", { desc = "Lazygit" })
+      vim.keymap.set("n", "<leader>tp", "<cmd>lua _PYTHON_TOGGLE()<CR>", { desc = "Python REPL" })
     end,
   },
 
@@ -3986,10 +4650,22 @@ return {
         c = { "clang_format" },
         cpp = { "clang_format" },
         python = { "black", "isort" },
+        lua = { "stylua" },
+        javascript = { "prettier" },
+        html = { "prettier" },
+        css = { "prettier" },
+        json = { "prettier" },
+        yaml = { "prettier" },
+        markdown = { "prettier" },
       },
       format_on_save = {
         timeout_ms = 500,
         lsp_fallback = true,
+      },
+      formatters = {
+        clang_format = {
+          prepend_args = { "--style=llvm" },
+        },
       },
     },
   },
@@ -4002,8 +4678,193 @@ return {
         c = { "cppcheck" },
         cpp = { "cppcheck" },
         python = { "flake8" },
+        javascript = { "eslint" },
+      },
+      linters = {
+        cppcheck = {
+          args = {
+            "--enable=all",
+            "--suppress=missingIncludeSystem",
+            "--inline-suppr",
+            "--quiet",
+            "--template=gcc",
+          },
+        },
       },
     },
+  },
+
+  -- Indentation guides
+  {
+    "lukas-reineke/indent-blankline.nvim",
+    main = "ibl",
+    opts = {
+      indent = {
+        char = "│",
+        tab_char = "│",
+      },
+      scope = {
+        enabled = true,
+        show_start = true,
+        show_end = false,
+        injected_languages = false,
+        highlight = { "Function", "Label" },
+        priority = 500,
+      },
+      exclude = {
+        filetypes = {
+          "help",
+          "alpha",
+          "dashboard",
+          "neo-tree",
+          "Trouble",
+          "trouble",
+          "lazy",
+          "mason",
+          "notify",
+          "toggleterm",
+          "lazyterm",
+        },
+      },
+    },
+  },
+
+  -- Better folding
+  {
+    "kevinhwang91/nvim-ufo",
+    dependencies = {
+      "kevinhwang91/promise-async",
+    },
+    config = function()
+      vim.o.foldcolumn = "1"
+      vim.o.foldlevel = 99
+      vim.o.foldlevelstart = 99
+      vim.o.foldenable = true
+
+      require("ufo").setup({
+        provider_selector = function(bufnr, filetype, buftype)
+          return {"treesitter", "indent"}
+        end,
+      })
+
+      -- Add fold keymaps
+      vim.keymap.set("n", "zR", require("ufo").openAllFolds, { desc = "Open all folds" })
+      vim.keymap.set("n", "zM", require("ufo").closeAllFolds, { desc = "Close all folds" })
+      vim.keymap.set("n", "zr", require("ufo").openFoldsExceptKinds, { desc = "Open folds except kinds" })
+      vim.keymap.set("n", "zm", require("ufo").closeFoldsWith, { desc = "Close folds with" })
+      vim.keymap.set("n", "K", function()
+        local winid = require("ufo").peekFoldedLinesUnderCursor()
+        if not winid then
+          vim.lsp.buf.hover()
+        end
+      end, { desc = "Peek fold or show hover" })
+    end,
+  },
+
+  -- Illuminate word under cursor
+  {
+    "RRethy/vim-illuminate",
+    opts = {
+      delay = 200,
+      large_file_cutoff = 2000,
+      large_file_overrides = {
+        providers = { "lsp" },
+      },
+    },
+    config = function(_, opts)
+      require("illuminate").configure(opts)
+
+      local function map(key, dir, buffer)
+        vim.keymap.set("n", key, function()
+          require("illuminate")["goto_" .. dir .. "_reference"](false)
+        end, { desc = dir:sub(1, 1):upper() .. dir:sub(2) .. " Reference", buffer = buffer })
+      end
+
+      map("]]", "next")
+      map("[[", "prev")
+
+      -- Auto command for buffer local mappings
+      vim.api.nvim_create_autocmd("FileType", {
+        callback = function()
+          local buffer = vim.api.nvim_get_current_buf()
+          map("]]", "next", buffer)
+          map("[[", "prev", buffer)
+        end,
+      })
+    end,
+    keys = {
+      { "]]", desc = "Next Reference" },
+      { "[[", desc = "Prev Reference" },
+    },
+  },
+
+  -- Enhanced telescope
+  {
+    "nvim-telescope/telescope.nvim",
+    dependencies = {
+      "nvim-telescope/telescope-fzf-native.nvim",
+      build = "make",
+      config = function()
+        require("telescope").load_extension("fzf")
+      end,
+    },
+    opts = {
+      defaults = {
+        prompt_prefix = " ",
+        selection_caret = " ",
+        path_display = { "truncate" },
+        sorting_strategy = "ascending",
+        layout_config = {
+          horizontal = {
+            prompt_position = "top",
+            preview_width = 0.55,
+            results_width = 0.8,
+          },
+          vertical = {
+            mirror = false,
+          },
+          width = 0.87,
+          height = 0.80,
+          preview_cutoff = 120,
+        },
+        file_ignore_patterns = { "node_modules", ".git/", "*.o", "*.a", "*.so" },
+        generic_sorter = require("telescope.sorters").get_generic_fuzzy_sorter,
+        file_sorter = require("telescope.sorters").get_fuzzy_file,
+      },
+      pickers = {
+        find_files = {
+          find_command = { "fd", "--type", "f", "--strip-cwd-prefix" },
+        },
+        live_grep = {
+          additional_args = function(opts)
+            return {"--hidden"}
+          end
+        },
+      },
+    },
+  },
+
+  -- Harpoon for quick file navigation
+  {
+    "ThePrimeagen/harpoon",
+    branch = "harpoon2",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function()
+      local harpoon = require("harpoon")
+      harpoon:setup()
+
+      vim.keymap.set("n", "<leader>ha", function() harpoon:list():append() end, { desc = "Add file to harpoon" })
+      vim.keymap.set("n", "<leader>hh", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = "Toggle harpoon menu" })
+
+      vim.keymap.set("n", "<leader>h1", function() harpoon:list():select(1) end, { desc = "Harpoon file 1" })
+      vim.keymap.set("n", "<leader>h2", function() harpoon:list():select(2) end, { desc = "Harpoon file 2" })
+      vim.keymap.set("n", "<leader>h3", function() harpoon:list():select(3) end, { desc = "Harpoon file 3" })
+      vim.keymap.set("n", "<leader>h4", function() harpoon:list():select(4) end, { desc = "Harpoon file 4" })
+
+      -- Toggle previous & next buffers stored within Harpoon list
+      vim.keymap.set("n", "<C-S-P>", function() harpoon:list():prev() end, { desc = "Previous harpoon" })
+      vim.keymap.set("n", "<C-S-N>", function() harpoon:list():next() end, { desc = "Next harpoon" })
+    end,
   },
 }</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">

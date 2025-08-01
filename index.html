@@ -601,6 +601,7 @@ sudo systemctl enable cpu-performance.service</code>
                     <code>mkdir -p ~/.config/scripts ~/Pictures/wallpapers && \
 cat > ~/.config/scripts/wallpaper.sh <<'EOF'
 #!/bin/bash
+
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 
 if [ ! -d "$WALLPAPER_DIR" ]; then
@@ -610,16 +611,40 @@ if [ ! -d "$WALLPAPER_DIR" ]; then
     exit 1
 fi
 
-WALLPAPERS=($(find "$WALLPAPER_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \)))
+# Use a more robust approach to handle files with spaces and special characters
+# Search recursively (-r) and use null separator for safety
+mapfile -d '' WALLPAPERS < <(find "$WALLPAPER_DIR" -type f \
+    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" -o -iname "*.gif" -o -iname "*.tiff" -o -iname "*.tif" \) \
+    -readable -print0)
 
 if [ ${#WALLPAPERS[@]} -eq 0 ]; then
     echo "No wallpapers found in $WALLPAPER_DIR"
+    echo "Searching for any image files..."
+    # Debug: show what files are actually there
+    find "$WALLPAPER_DIR" -type f -name "*.*" | head -10
     exit 1
 fi
 
-RANDOM_WALLPAPER=${WALLPAPERS[$RANDOM % ${#WALLPAPERS[@]}]}
-feh --bg-scale "$RANDOM_WALLPAPER"
-echo "Wallpaper set to: $(basename "$RANDOM_WALLPAPER")"
+echo "Found ${#WALLPAPERS[@]} wallpapers"
+
+# Use a more reliable random selection
+RANDOM_INDEX=$((RANDOM % ${#WALLPAPERS[@]}))
+RANDOM_WALLPAPER="${WALLPAPERS[$RANDOM_INDEX]}"
+
+# Check if feh is installed
+if ! command -v feh &> /dev/null; then
+    echo "Error: feh is not installed. Install it with: sudo pacman -S feh"
+    exit 1
+fi
+
+# Set the wallpaper
+if feh --bg-scale "$RANDOM_WALLPAPER"; then
+    echo "Wallpaper set to: $(basename "$RANDOM_WALLPAPER")"
+    echo "Full path: $RANDOM_WALLPAPER"
+else
+    echo "Error: Failed to set wallpaper"
+    exit 1
+fi
 EOF
 chmod +x ~/.config/scripts/wallpaper.sh</code>
                     <button class="copy-btn" onclick="copyToClipboard(this)">

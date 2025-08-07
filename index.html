@@ -1,0 +1,2991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Guide</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>Arch Linux for my HP EliteBook 845 G8 Notebook PC</h1>
+
+    <h2>TTY INSTALLATION</h2>
+
+    <pre>setfont ter-132b && loadkeys us
+
+iwctl
+device list
+station wlan0 scan
+station wlan0 get-networks
+station wlan0 connect "YOUR_NETWORK_NAME"
+exit
+
+ping -c 3 archlinux.org || { echo "No internet"; exit 1; }
+
+timedatectl set-ntp true
+
+lsblk
+
+cfdisk /dev/nvme0n1
+
+mkfs.ext4 /dev/nvme0n1p3
+mkfs.fat -F 32 /dev/nvme0n1p1
+mkswap /dev/nvme0n1p2
+
+mount /dev/nvme0n1p3 /mnt
+mkdir -p /mnt/boot/efi
+mount /dev/nvme0n1p1 /mnt/boot/efi
+swapon /dev/nvme0n1p2
+
+pacstrap /mnt base linux linux-firmware amd-ucode sof-firmware base-devel grub efibootmgr networkmanager sudo git neovim
+
+genfstab /mnt
+genfstab -U /mnt >> /mnt/etc/fstab
+
+arch-chroot /mnt
+
+date
+ln -sf /usr/share/zoneinfo/Asia/Manila /etc/localtime
+hwclock --systohc
+date
+
+echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen
+locale-gen
+echo 'LANG=en_US.UTF-8' > /etc/locale.conf
+echo 'KEYMAP=us' > /etc/vconsole.conf
+
+echo 'tobias' > /etc/hostname
+passwd
+useradd -m -G wheel -s /bin/bash sid
+passwd sid
+
+echo '%wheel ALL=(ALL:ALL) ALL' >> /etc/sudoers
+
+systemctl enable NetworkManager
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
+grub-mkconfig -o /boot/grub/grub.cfg
+
+exit
+umount -R /mnt
+reboot
+
+nmcli device wifi connect "YOUR_NETWORK_NAME" password "YOUR_PASSWORD"
+
+sudo pacman -Syu
+
+sudo pacman -S xorg-server xorg-xinit i3-wm i3status i3lock rofi alacritty firefox
+
+echo 'exec i3' > ~/.xinitrc
+
+startx</pre>
+
+    <h2>POST INSTALLATION</h2>
+    <h3>All Packages</h3>
+
+        <pre>sudo sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman\.d\/mirrorlist/ s/^#//' /etc/pacman.conf && \
+sudo pacman -Syu && \
+git clone https://aur.archlinux.org/yay.git && \
+cd yay && \
+makepkg -si --noconfirm --needed && \
+cd .. && \
+rm -rf yay && \
+sudo pacman -S --noconfirm linux-headers archlinux-keyring pacman-contrib man-db man-pages reflector tmux fish lazygit gtk-engine-murrine gtk-engines thunar papirus-icon-theme thunar-archive-plugin xarchiver p7zip unrar zip unzip tar ntfs-3g exfatprogs gvfs gvfs-mtp gvfs-gphoto2 gvfs-smb udisks2 udiskie libmtp gparted picom feh flameshot maim xclip xorg-xrandr fastfetch btop lm_sensors acpi powertop tlp tlp-rdw dmidecode brightnessctl pipewire pipewire-pulse pipewire-alsa wireplumber alsa-utils alsa-ucm-conf bluez bluez-utils libinput xf86-input-libinput xorg-xinput xdotool v4l-utils cheese wget curl rsync fzf ripgrep fd tree-sitter tree-sitter-cli clang cppcheck python-lsp-server python-black python-isort python-flake8 python-debugpy python-pynvim luarocks gdb make cmake ninja ccache nodejs npm dunst libnotify mpv ufw fail2ban mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon xf86-video-amdgpu mesa-vdpau libva-mesa-driver noto-fonts-emoji noto-fonts noto-fonts-cjk inter-font steam steam-native-runtime gamemode lib32-gamemode wine winetricks lib32-gnutls lib32-libxcomposite lib32-libxinerama lib32-libpulse lib32-alsa-plugins lib32-pipewire lib32-pipewire-jack mangohud lib32-mangohud cmus && \
+yay -S --noconfirm ttf-jetbrains-mono-nerd spotify papirus-folders-git protonup-qt || echo "Some AUR packages failed"</pre>
+
+    <h3>System Optimization</h3>
+
+        <pre>sudo usermod -aG audio,video,input,storage,power,rfkill,sys,adm,disk,gamemode sid && \
+sudo reflector --country Philippines,Singapore,South_Korea,Japan --age 12 --protocol https --sort rate --latest 10 --save /etc/pacman.d/mirrorlist && \
+sudo systemctl enable --now reflector.timer && \
+sudo pacman -Syyu && \
+sudo modprobe ip_tables && \
+sudo modprobe ip6_tables && \
+sudo systemctl enable ufw && \
+sudo ufw default deny incoming && \
+sudo ufw default allow outgoing && \
+sudo ufw --force enable && \
+sudo tee /etc/fail2ban/jail.local > /dev/null <<'EOF'
+[DEFAULT]
+bantime = 1h
+findtime = 10m
+maxretry = 3
+
+[sshd]
+enabled = true
+port = ssh
+logpath = /var/log/auth.log
+EOF
+sudo systemctl enable --now fail2ban && \
+sudo sensors-detect --auto && \
+sudo sed -i 's/#AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf && \
+systemctl --user daemon-reexec && \
+systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service && \
+sudo systemctl enable --now bluetooth tlp udisks2 && \
+sudo systemctl mask systemd-networkd-wait-online.service && \
+sudo sed -i 's/^#DefaultTimeoutStopSec=.*$/DefaultTimeoutStopSec=10s/' /etc/systemd/system.conf && \
+sudo sed -i 's/^#DefaultTimeoutStartSec=.*$/DefaultTimeoutStartSec=5s/' /etc/systemd/system.conf && \
+sudo systemctl enable fstrim.timer && \
+sudo systemctl start fstrim.timer && \
+sudo systemctl daemon-reexec && \
+sudo chsh -s /usr/bin/fish sid</pre>
+
+    <h3>Performance Optimization</h3>
+
+        <pre>sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="quiet splash nowatchdog processor.max_cstate=1 amd_pstate=active rcu_nocbs=0-5 nohz_full=1-5"/' /etc/default/grub && \
+sudo grub-mkconfig -o /boot/grub/grub.cfg && \
+echo 'ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"' | sudo tee /etc/udev/rules.d/60-nvme-scheduler.rules && \
+brightnessctl set 50% && \
+sudo mkdir -p /etc/X11/xorg.conf.d && \
+sudo tee /etc/X11/xorg.conf.d/30-touchpad.conf > /dev/null <<'EOF'
+Section "InputClass"
+    Identifier "touchpad"
+    Driver "libinput"
+    MatchIsTouchpad "on"
+    Option "Tapping" "on"
+    Option "TappingButtonMap" "lrm"
+    Option "NaturalScrolling" "true"
+    Option "ScrollMethod" "twofinger"
+    Option "ClickMethod" "clickfinger"
+    Option "DisableWhileTyping" "on"
+EndSection
+EOF</pre>
+
+    <h3>Custom System Scripts</h3>
+
+        <pre>sudo tee /usr/local/bin/update > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== UPDATING SYSTEM ==="
+sudo pacman -Syu --noconfirm
+echo "=== UPDATING AUR PACKAGES ==="
+yay -Syu --noconfirm
+echo "=== UPDATE COMPLETE ==="
+EOF
+sudo chmod +x /usr/local/bin/update && \
+sudo tee /usr/local/bin/debloat > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== DISK SPACE BEFORE ==="
+df -h / | tail -1
+echo "=== CLEANING PACKAGE CACHE ==="
+sudo pacman -Sc --noconfirm
+yay -Sc --noconfirm
+echo "=== REMOVING ORPHANED PACKAGES ==="
+sudo pacman -Rns $(pacman -Qtdq) --noconfirm 2>/dev/null || echo "No orphaned packages"
+echo "=== CLEARING SYSTEM LOGS ==="
+sudo journalctl --vacuum-time=3d
+echo "=== CLEARING USER CACHE ==="
+rm -rf ~/.cache/* 2>/dev/null || true
+echo "=== CLEARING TEMP FILES ==="
+sudo rm -rf /tmp/* /var/tmp/* 2>/dev/null || true
+echo "=== CLEARING THUMBNAILS ==="
+rm -rf ~/.thumbnails/* ~/.local/share/Trash/* 2>/dev/null || true
+echo "=== CLEARING FIREFOX CACHE ==="
+rm -rf ~/.mozilla/firefox/*/storage/default/cache2/* 2>/dev/null || true
+echo "=== MEMORY CLEANUP ==="
+sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
+echo "=== DEBLOAT COMPLETE ==="
+df -h / | tail -1
+EOF
+sudo chmod +x /usr/local/bin/debloat && \
+sudo tee /usr/local/bin/performance > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== ENABLING PERFORMANCE MODE ==="
+echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+echo "=== SETTING VM SWAPPINESS ==="
+echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.d/99-swappiness.conf
+echo "=== OPTIMIZING I/O SCHEDULER ==="
+echo mq-deadline | sudo tee /sys/block/nvme0n1/queue/scheduler
+echo "=== PERFORMANCE MODE ACTIVE ==="
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+EOF
+sudo chmod +x /usr/local/bin/performance && \
+sudo tee /usr/local/bin/powersave > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== ENABLING POWERSAVE MODE ==="
+echo powersave | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+echo "=== ENABLING WIFI POWERSAVE ==="
+sudo iw dev wlan0 set power_save on 2>/dev/null || echo "Wifi powersave not available"
+echo "=== REDUCING BRIGHTNESS ==="
+brightnessctl set 30%
+echo "=== POWERSAVE MODE ACTIVE ==="
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+EOF
+sudo chmod +x /usr/local/bin/powersave && \
+sudo tee /usr/local/bin/boost > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== TEMPORARY PERFORMANCE BOOST ==="
+echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+echo 1 | sudo tee /proc/sys/vm/drop_caches
+echo "=== BOOST ACTIVE FOR THIS SESSION ==="
+EOF
+sudo chmod +x /usr/local/bin/boost && \
+sudo tee /usr/local/bin/boottime > /dev/null <<'EOF'
+#!/bin/bash
+echo "=== BOOT TIME ANALYSIS ==="
+systemd-analyze
+echo ""
+echo "=== SLOWEST SERVICES ==="
+systemd-analyze blame | head -10
+echo ""
+echo "=== CRITICAL CHAIN ==="
+systemd-analyze critical-chain
+EOF
+sudo chmod +x /usr/local/bin/boottime</pre>
+
+    <h3>Performance Configuration</h3>
+
+        <pre>sudo tee /etc/sysctl.d/99-performance.conf > /dev/null <<'EOF'
+# Performance optimizations and Advanced I/O optimizations
+vm.swappiness=10
+vm.vfs_cache_pressure=50
+vm.dirty_ratio=15
+vm.dirty_background_ratio=5
+kernel.sched_migration_cost_ns=5000000
+kernel.sched_autogroup_enabled=0
+vm.dirty_expire_centisecs = 1500
+vm.dirty_writeback_centisecs = 1500
+vm.page-cluster = 0
+kernel.sched_rt_runtime_us = 950000
+kernel.sched_rt_period_us = 1000000
+EOF
+sudo tee /etc/systemd/system/cpu-performance.service > /dev/null <<'EOF'
+[Unit]
+Description=Set CPU Performance Governor
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl enable cpu-performance.service</pre>
+
+
+    <h2>RICE CONFIGURATION</h2>
+    <h3>Create All Directories</h3>
+
+        <pre>mkdir -p ~/.config/{scripts,i3,i3status,alacritty,rofi,picom,dunst,fish,btop,cmus} ~/Pictures/wallpapers</pre>
+
+    <h3>Wallpaper Script</h3>
+
+        <pre>cat > ~/.config/scripts/wallpaper.sh <<'EOF'
+#!/bin/bash
+
+WALLPAPER_DIR="$HOME/Pictures/wallpapers"
+FALLBACK_COLOR="#f9f5d7"  # Gruvbox Light background
+
+# Validate image format
+validate_image() {
+    local file="$1"
+    if command -v file >/dev/null 2>&1; then
+        file_type=$(file --mime-type "$file" 2>/dev/null | cut -d: -f2 | tr -d ' ')
+        case "$file_type" in
+            image/jpeg|image/jpg|image/png|image/webp|image/bmp|image/gif|image/tiff)
+                return 0
+                ;;
+            *)
+                return 1
+                ;;
+        esac
+    else
+        # Fallback to extension checking if 'file' command is not available
+        case "${file,,}" in
+            *.jpg|*.jpeg|*.png|*.webp|*.bmp|*.gif|*.tiff|*.tif)
+                return 0
+                ;;
+            *)
+                return 1
+                ;;
+        esac
+    fi
+}
+
+# Create wallpaper directory if it doesn't exist
+if [ ! -d "$WALLPAPER_DIR" ]; then
+    echo "Creating wallpaper directory: $WALLPAPER_DIR"
+    mkdir -p "$WALLPAPER_DIR"
+fi
+
+# Search for valid image files
+mapfile -d '' ALL_FILES < <(find "$WALLPAPER_DIR" -type f -readable -print0 2>/dev/null)
+
+# Validate each file
+WALLPAPERS=()
+for file in "${ALL_FILES[@]}"; do
+    if validate_image "$file"; then
+        WALLPAPERS+=("$file")
+    fi
+done
+
+if [ ${#WALLPAPERS[@]} -eq 0 ]; then
+    echo "No valid wallpapers found in $WALLPAPER_DIR"
+    echo "Available files:"
+    find "$WALLPAPER_DIR" -type f -name "*.*" 2>/dev/null | head -5
+    echo "Setting fallback solid color background..."
+
+    # Check if feh is installed
+    if command -v feh &> /dev/null; then
+        feh --bg-fill --no-fehbg -B "$FALLBACK_COLOR"
+        echo "Fallback background color set: $FALLBACK_COLOR"
+    elif command -v xsetroot &> /dev/null; then
+        xsetroot -solid "$FALLBACK_COLOR"
+        echo "Fallback background color set with xsetroot: $FALLBACK_COLOR"
+    else
+        echo "Error: Neither feh nor xsetroot is available for setting background"
+        exit 1
+    fi
+    exit 0
+fi
+
+echo "Found ${#WALLPAPERS[@]} valid wallpapers"
+
+# Select random wallpaper
+RANDOM_INDEX=$((RANDOM % ${#WALLPAPERS[@]}))
+RANDOM_WALLPAPER="${WALLPAPERS[$RANDOM_INDEX]}"
+
+# Validate selected file one more time
+if [ ! -r "$RANDOM_WALLPAPER" ]; then
+    echo "Error: Selected wallpaper is not readable: $RANDOM_WALLPAPER"
+    exit 1
+fi
+
+# Check if feh is installed
+if ! command -v feh &> /dev/null; then
+    echo "Error: feh is not installed. Install it with: sudo pacman -S feh"
+    exit 1
+fi
+
+# Set the wallpaper
+if feh --bg-scale "$RANDOM_WALLPAPER" 2>/dev/null; then
+    echo "Wallpaper set to: $(basename "$RANDOM_WALLPAPER")"
+    echo "Full path: $RANDOM_WALLPAPER"
+
+    # Optional: Save current wallpaper info
+    echo "$RANDOM_WALLPAPER" > "$HOME/.config/scripts/current_wallpaper"
+else
+    echo "Error: Failed to set wallpaper with feh"
+    echo "Falling back to solid color..."
+    feh --bg-fill --no-fehbg -B "$FALLBACK_COLOR"
+    exit 1
+fi
+EOF
+chmod +x ~/.config/scripts/wallpaper.sh</pre>
+
+    <h3>Go To i3 Config file</h3>
+
+        <pre>nvim ~/.config/i3/config</pre>
+
+    <h3>i3 Config</h3>
+
+        <pre># i3 config file (v4) - Gruvbox Light Theme
+# HP EliteBook 845 G8 Optimized Configuration
+
+# Set mod key (Super/Windows key)
+set $mod Mod4
+
+# Gruvbox Light Color Scheme
+set $gruvbox0  #fbf1c7
+set $gruvbox1  #ebdbb2
+set $gruvbox2  #d5c4a1
+set $gruvbox3  #bdae93
+set $gruvbox4  #a89984
+set $gruvbox5  #928374
+set $gruvbox6  #7c6f64
+set $gruvbox7  #665c54
+set $gruvbox8  #504945
+set $gruvbox9  #3c3836
+set $gruvbox10 #282828
+set $gruvbox11 #cc241d
+set $gruvbox12 #d65d0e
+set $gruvbox13 #d79921
+set $gruvbox14 #98971a
+set $gruvbox15 #689d6a
+set $gruvbox16 #458588
+set $gruvbox17 #b16286
+set $gruvbox18 #af3a03
+set $gruvbox19 #79740e
+
+# Font for window titles and bar
+font pango:JetBrains Mono Nerd Font 12
+
+# Use Mouse+$mod to drag floating windows
+floating_modifier $mod
+
+# Start a terminal
+bindsym $mod+Return exec alacritty
+
+# Kill focused window
+bindsym $mod+Shift+q kill
+
+# Start dmenu/rofi
+bindsym $mod+d exec ~/.config/scripts/rofi_run.sh
+
+# Change focus
+bindsym $mod+j focus left
+bindsym $mod+k focus down
+bindsym $mod+l focus up
+bindsym $mod+semicolon focus right
+
+# Alternatively, use cursor keys
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# Move focused window
+bindsym $mod+Shift+j move left
+bindsym $mod+Shift+k move down
+bindsym $mod+Shift+l move up
+bindsym $mod+Shift+semicolon move right
+
+# Alternatively, use cursor keys
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# Split in horizontal orientation
+bindsym $mod+h split h
+
+# Split in vertical orientation
+bindsym $mod+v split v
+
+# Enter fullscreen mode
+bindsym $mod+f fullscreen toggle
+
+# Change container layout
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+
+# Toggle tiling / floating
+bindsym $mod+Shift+space floating toggle
+
+# Change focus between tiling / floating windows
+bindsym $mod+space focus mode_toggle
+
+# Focus the parent container
+bindsym $mod+a focus parent
+
+# Define workspaces
+set $ws1 "1"
+set $ws2 "2"
+set $ws3 "3"
+set $ws4 "4"
+set $ws5 "5"
+set $ws6 "6"
+set $ws7 "7"
+set $ws8 "8"
+set $ws9 "9"
+set $ws10 "10"
+
+# Switch to workspace
+bindsym $mod+1 workspace number $ws1
+bindsym $mod+2 workspace number $ws2
+bindsym $mod+3 workspace number $ws3
+bindsym $mod+4 workspace number $ws4
+bindsym $mod+5 workspace number $ws5
+bindsym $mod+6 workspace number $ws6
+bindsym $mod+7 workspace number $ws7
+bindsym $mod+8 workspace number $ws8
+bindsym $mod+9 workspace number $ws9
+bindsym $mod+0 workspace number $ws10
+
+# Move focused container to workspace
+bindsym $mod+Shift+1 move container to workspace number $ws1
+bindsym $mod+Shift+2 move container to workspace number $ws2
+bindsym $mod+Shift+3 move container to workspace number $ws3
+bindsym $mod+Shift+4 move container to workspace number $ws4
+bindsym $mod+Shift+5 move container to workspace number $ws5
+bindsym $mod+Shift+6 move container to workspace number $ws6
+bindsym $mod+Shift+7 move container to workspace number $ws7
+bindsym $mod+Shift+8 move container to workspace number $ws8
+bindsym $mod+Shift+9 move container to workspace number $ws9
+bindsym $mod+Shift+0 move container to workspace number $ws10
+
+# Reload configuration file
+bindsym $mod+Shift+c reload
+
+# Restart i3 inplace
+bindsym $mod+Shift+r restart
+
+# Exit i3
+bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
+
+# Resize mode
+mode "resize" {
+    bindsym j resize shrink width 10 px or 10 ppt
+    bindsym k resize grow height 10 px or 10 ppt
+    bindsym l resize shrink height 10 px or 10 ppt
+    bindsym semicolon resize grow width 10 px or 10 ppt
+
+    bindsym Left resize shrink width 10 px or 10 ppt
+    bindsym Down resize grow height 10 px or 10 ppt
+    bindsym Up resize shrink height 10 px or 10 ppt
+    bindsym Right resize grow width 10 px or 10 ppt
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+    bindsym $mod+r mode "default"
+}
+bindsym $mod+r mode "resize"
+
+# Window aesthetics
+for_window [class=".*"] border pixel 2
+gaps inner 8
+gaps outer 4
+
+# Window colors (Gruvbox Light theme)
+#                       border    background text      indicator  child_border
+client.focused          $gruvbox16 $gruvbox0  $gruvbox8  $gruvbox16 $gruvbox16
+client.focused_inactive $gruvbox7  $gruvbox1  $gruvbox8  $gruvbox7  $gruvbox7
+client.unfocused        $gruvbox3  $gruvbox0  $gruvbox7  $gruvbox3  $gruvbox3
+client.urgent           $gruvbox11 $gruvbox11 $gruvbox0  $gruvbox11 $gruvbox11
+client.placeholder      $gruvbox0  $gruvbox0  $gruvbox8  $gruvbox0  $gruvbox0
+
+# Application shortcuts
+bindsym $mod+b exec firefox
+bindsym $mod+t exec thunar
+bindsym $mod+m exec --no-startup-id "i3-msg workspace 5; alacritty -e cmus"
+bindsym $mod+Shift+m exec spotify
+bindsym $mod+n exec --no-startup-id "i3-msg workspace 5; alacritty -e nvim"
+bindsym $mod+p exec alacritty -e btop
+
+# Workspace navigation
+bindsym $mod+Tab workspace next
+bindsym $mod+Shift+Tab workspace prev
+
+# Lock screen
+bindsym $mod+x exec ~/.config/scripts/lock_with_wallpaper.sh
+
+# Screenshots
+bindsym Print exec maim | xclip -selection clipboard -t image/png
+bindsym Shift+Print exec flameshot gui
+
+# Brightness controls
+bindsym XF86MonBrightnessUp exec brightnessctl set +5% && notify-send "Brightness: $(brightnessctl get)"
+bindsym XF86MonBrightnessDown exec brightnessctl set 5%- && notify-send "Brightness: $(brightnessctl get)"
+
+# Volume controls
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+
+# Wallpaper management
+bindsym $mod+Shift+w exec ~/.config/scripts/wallpaper.sh random
+
+# Power menu
+bindsym $mod+Shift+p exec ~/.config/scripts/rofi_power.sh
+
+# Application assignments
+assign [class="Spotify"] 10
+
+# Autostart applications
+exec --no-startup-id ~/.config/scripts/wallpaper.sh auto
+exec --no-startup-id picom --config ~/.config/picom/picom.conf
+exec --no-startup-id dunst
+
+# Status bar
+bar {
+    status_command i3status
+    position top
+    font pango:JetBrains Mono Nerd Font 12
+    separator_symbol "|"
+    colors {
+        background $gruvbox0
+        statusline $gruvbox8
+        separator $gruvbox7
+        # border background text
+        focused_workspace $gruvbox16 $gruvbox16 $gruvbox0
+        inactive_workspace $gruvbox3 $gruvbox0 $gruvbox7
+        active_workspace $gruvbox7 $gruvbox1 $gruvbox8
+        urgent_workspace $gruvbox11 $gruvbox11 $gruvbox0
+        binding_mode $gruvbox13 $gruvbox13 $gruvbox0
+    }
+}</pre>
+
+    <h3>i3status Config</h3>
+
+        <pre>cat > ~/.config/i3status/config <<'EOF'
+general {
+    colors = true
+    interval = 2
+    color_good = "#98971a"
+    color_bad = "#cc241d"
+    color_degraded = "#d79921"
+}
+
+order += "wireless _first_"
+order += "ethernet _first_"
+order += "memory"
+order += "cpu_usage"
+order += "cpu_temperature 0"
+order += "disk /"
+order += "battery all"
+order += "volume master"
+order += "tztime local"
+
+wireless _first_ {
+    format_up = "📶 %quality %essid %ip"
+    format_down = "📶 down"
+    separator = false
+    separator_block_width = 1
+}
+
+ethernet _first_ {
+    format_up = "🌐 %ip (%speed)"
+    format_down = "🌐 down"
+    separator = false
+    separator_block_width = 1
+}
+
+memory {
+    format = "🧠 %used/%total"
+    threshold_degraded = "1G"
+    format_degraded = "🧠 < %free"
+}
+
+cpu_usage {
+    format = "💻 %usage"
+    max_threshold = 75
+    degraded_threshold = 25
+}
+
+cpu_temperature 0 {
+    format = "🌡️ %degrees°C"
+    max_threshold = 75
+    path = "/sys/devices/virtual/thermal/thermal_zone0/hwmon1/temp1_input"
+}
+
+disk "/" {
+    format = "💾 %used/%total"
+    low_threshold = 10
+    threshold_type = percentage_avail
+}
+
+battery all {
+    format = "%status %percentage %remaining %consumption"
+    format_down = "🔌 AC"
+    last_full_capacity = true
+    integer_battery_capacity = true
+    status_chr = "🔌"
+    status_bat = "🔋"
+    status_unk = "❓"
+    status_full = "⚡"
+    low_threshold = 15
+    threshold_type = percentage
+}
+
+volume master {
+    format = "🔊 %volume"
+    format_muted = "🔇 muted"
+    device = "pulse"
+}
+
+tztime local {
+    format = "📅 %m-%d-%Y 🕐 %H:%M:%S"
+}
+EOF</pre>
+
+    <h3>i3lock Config</h3>
+
+        <pre>cat > ~/.config/scripts/lock_with_wallpaper.sh <<'EOF'
+#!/bin/bash
+
+# i3lock with blurred wallpaper - Gruvbox Light themed
+WALLPAPER_FILE="$HOME/.config/scripts/current_wallpaper"
+LOCK_IMAGE="/tmp/lock_wallpaper.png"
+FALLBACK_COLOR="#fbf1c7"
+
+# Check if we have a current wallpaper
+if [ -f "$WALLPAPER_FILE" ]; then
+    current_wall=$(cat "$WALLPAPER_FILE" 2>/dev/null)
+
+    # Verify the wallpaper file exists and is readable
+    if [ -f "$current_wall" ] && [ -r "$current_wall" ]; then
+        echo "Creating blurred lock screen from: $current_wall"
+
+        # Create blurred version with Gruvbox Light overlay
+        convert "$current_wall" \
+            -scale 1920x1080^ \
+            -gravity center \
+            -extent 1920x1080 \
+            -blur 0x8 \
+            -fill "#fbf1c7" \
+            -colorize 15% \
+            "$LOCK_IMAGE" 2>/dev/null
+
+        # Check if conversion was successful
+        if [ $? -eq 0 ] && [ -f "$LOCK_IMAGE" ]; then
+            # Lock with the blurred wallpaper
+            i3lock -i "$LOCK_IMAGE" \
+                   --pointer=default \
+                   --ignore-empty-password \
+                   --show-failed-attempts
+
+            # Clean up temporary file
+            rm -f "$LOCK_IMAGE"
+            exit 0
+        else
+            echo "Warning: Failed to create blurred wallpaper, using fallback"
+        fi
+    else
+        echo "Warning: Wallpaper file not found or not readable: $current_wall"
+    fi
+else
+    echo "Warning: No current wallpaper set"
+fi
+
+# Fallback to solid color
+echo "Using fallback solid color lock screen"
+i3lock -c "${FALLBACK_COLOR#\#}" \
+       --pointer=default \
+       --ignore-empty-password \
+       --show-failed-attempts
+EOF
+chmod +x ~/.config/scripts/lock_with_wallpaper.sh</pre>
+
+    <h3>Alacritty Config</h3>
+
+        <pre>cat > ~/.config/alacritty/alacritty.toml <<'EOF'
+[window]
+opacity = 0.95
+padding = { x = 8, y = 8 }
+decorations = "none"
+startup_mode = "Windowed"
+
+[font]
+normal = { family = "JetBrains Mono Nerd Font", style = "Regular" }
+bold = { family = "JetBrains Mono Nerd Font", style = "Bold" }
+italic = { family = "JetBrains Mono Nerd Font", style = "Italic" }
+size = 12
+
+[colors.primary]
+background = "#fbf1c7"
+foreground = "#3c3836"
+dim_foreground = "#7c6f64"
+
+[colors.cursor]
+text = "#fbf1c7"
+cursor = "#3c3836"
+
+[colors.vi_mode_cursor]
+text = "#fbf1c7"
+cursor = "#3c3836"
+
+[colors.selection]
+text = "CellForeground"
+background = "#bdae93"
+
+[colors.search.matches]
+foreground = "#fbf1c7"
+background = "#458588"
+
+[colors.search.focused_match]
+foreground = "#fbf1c7"
+background = "#b16286"
+
+[colors.normal]
+black = "#fbf1c7"
+red = "#cc241d"
+green = "#98971a"
+yellow = "#d79921"
+blue = "#458588"
+magenta = "#b16286"
+cyan = "#689d6a"
+white = "#7c6f64"
+
+[colors.bright]
+black = "#928374"
+red = "#9d0006"
+green = "#79740e"
+yellow = "#b57614"
+blue = "#076678"
+magenta = "#8f3f71"
+cyan = "#427b58"
+white = "#3c3836"
+
+[colors.dim]
+black = "#f2e5bc"
+red = "#cc241d"
+green = "#98971a"
+yellow = "#d79921"
+blue = "#458588"
+magenta = "#b16286"
+cyan = "#689d6a"
+white = "#928374"
+
+[cursor.style]
+shape = "Block"
+blinking = "On"
+
+[scrolling]
+history = 10000
+EOF</pre>
+
+    <h3>Rofi Config</h3>
+
+        <pre>cat > ~/.config/rofi/config.rasi <<'EOF'
+configuration {
+    modi: "run,drun,window,ssh";
+    width: 600;
+    lines: 15;
+    columns: 1;
+    font: "JetBrains Mono Nerd Font Medium 12";
+    show-icons: true;
+    terminal: "alacritty";
+    ssh-client: "ssh";
+    ssh-command: "{terminal} -e {ssh-client} {host} [-p {port}]";
+    run-command: "{cmd}";
+    run-list-command: "";
+    run-shell-command: "{terminal} -e {cmd}";
+    window-command: "wmctrl -i -R {window}";
+    window-match-fields: "all";
+    icon-theme: "Papirus-Dark";
+    drun-match-fields: "name,generic,exec,categories";
+    drun-show-actions: false;
+    drun-display-format: "{icon} {name}";
+    disable-history: false;
+    ignored-prefixes: "";
+    sort: false;
+    sorting-method: "normal";
+    case-sensitive: false;
+    cycle: true;
+    sidebar-mode: false;
+    eh: 1;
+    auto-select: false;
+    parse-hosts: false;
+    parse-known-hosts: true;
+    combi-modi: "window,run";
+    matching: "fuzzy";
+    tokenize: true;
+    m: "-5";
+    line-margin: 2;
+    line-padding: 1;
+    filter: "";
+    separator-style: "dash";
+    hide-scrollbar: false;
+    fullscreen: false;
+    fake-transparency: false;
+    dpi: -1;
+    threads: 0;
+    scrollbar-width: 8;
+    scroll-method: 0;
+    fake-background: "screenshot";
+    window-format: "{w}    {c}   {t}";
+    click-to-exit: true;
+    show-match: true;
+    color-normal: "";
+    color-urgent: "";
+    color-active: "";
+    color-window: "";
+    max-history-size: 25;
+    combi-hide-mode-prefix: false;
+    matching-negate-char: '-';
+    pid: "/run/user/1000/rofi.pid";
+    display-window: "";
+    display-windowcd: "";
+    display-run: "";
+    display-ssh: "";
+    display-drun: "";
+    display-combi: "";
+    display-keys: "";
+}
+
+@theme "gruvbox-light"
+EOF
+cat > ~/.config/rofi/gruvbox-light.rasi <<'EOF'
+* {
+    /* Gruvbox Light color palette */
+    gruvbox0: #fbf1c7;
+    gruvbox1: #ebdbb2;
+    gruvbox2: #d5c4a1;
+    gruvbox3: #bdae93;
+    gruvbox4: #a89984;
+    gruvbox5: #928374;
+    gruvbox6: #7c6f64;
+    gruvbox7: #665c54;
+    gruvbox8: #504945;
+    gruvbox9: #3c3836;
+    gruvbox10: #282828;
+    gruvbox11: #cc241d;
+    gruvbox12: #d65d0e;
+    gruvbox13: #d79921;
+    gruvbox14: #98971a;
+    gruvbox15: #689d6a;
+    gruvbox16: #458588;
+    gruvbox17: #b16286;
+    gruvbox18: #af3a03;
+    gruvbox19: #79740e;
+
+    background-color: @gruvbox0;
+    border-color: @gruvbox16;
+    text-color: @gruvbox8;
+    spacing: 0;
+}
+
+window {
+    background-color: @gruvbox0;
+    border: 2px;
+    border-color: @gruvbox16;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+mainbox {
+    border: 0;
+    padding: 0;
+}
+
+message {
+    border: 2px 0px 0px;
+    border-color: @gruvbox16;
+    padding: 1px;
+}
+
+textbox {
+    text-color: @gruvbox8;
+}
+
+listview {
+    fixed-height: 0;
+    border: 2px 0px 0px;
+    border-color: @gruvbox16;
+    spacing: 2px;
+    scrollbar: false;
+    padding: 2px 0px 0px;
+}
+
+element {
+    border: 0;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+element-text {
+    background-color: inherit;
+    text-color: inherit;
+}
+
+element.normal.normal {
+    background-color: @gruvbox0;
+    text-color: @gruvbox8;
+}
+
+element.normal.urgent {
+    background-color: @gruvbox11;
+    text-color: @gruvbox0;
+}
+
+element.normal.active {
+    background-color: @gruvbox14;
+    text-color: @gruvbox0;
+}
+
+element.selected.normal {
+    background-color: @gruvbox16;
+    text-color: @gruvbox0;
+}
+
+element.selected.urgent {
+    background-color: @gruvbox11;
+    text-color: @gruvbox0;
+}
+
+element.selected.active {
+    background-color: @gruvbox14;
+    text-color: @gruvbox0;
+}
+
+element.alternate.normal {
+    background-color: @gruvbox0;
+    text-color: @gruvbox8;
+}
+
+element.alternate.urgent {
+    background-color: @gruvbox11;
+    text-color: @gruvbox0;
+}
+
+element.alternate.active {
+    background-color: @gruvbox14;
+    text-color: @gruvbox0;
+}
+
+scrollbar {
+    width: 4px;
+    border: 0;
+    handle-color: @gruvbox16;
+    handle-width: 8px;
+    padding: 0;
+}
+
+sidebar {
+    border: 2px 0px 0px;
+    border-color: @gruvbox16;
+}
+
+button {
+    spacing: 0;
+    text-color: @gruvbox8;
+}
+
+button.selected {
+    background-color: @gruvbox16;
+    text-color: @gruvbox0;
+}
+
+inputbar {
+    spacing: 0;
+    text-color: @gruvbox8;
+    padding: 1px;
+}
+
+case-indicator {
+    spacing: 0;
+    text-color: @gruvbox8;
+}
+
+entry {
+    spacing: 0;
+    text-color: @gruvbox8;
+    background-color: @gruvbox1;
+    border: 1px;
+    border-color: @gruvbox7;
+    border-radius: 4px;
+    padding: 6px;
+}
+
+prompt {
+    spacing: 0;
+    text-color: @gruvbox16;
+    margin: 0px 8px 0px 0px;
+}
+
+inputbar {
+    children: [ prompt,textbox-prompt-colon,entry,case-indicator ];
+}
+
+textbox-prompt-colon {
+    expand: false;
+    str: ":";
+    margin: 0px 0.3em 0em 0em;
+    text-color: @gruvbox16;
+}
+EOF
+cat > ~/.config/scripts/rofi_run.sh <<'EOF'
+#!/bin/bash
+rofi -show drun -theme gruvbox-light
+EOF
+chmod +x ~/.config/scripts/rofi_run.sh && \
+cat > ~/.config/scripts/rofi_power.sh <<'EOF'
+#!/bin/bash
+options="🔒 Lock\n🔄 Restart\n⏻ Shutdown\n🚪 Logout\n💤 Suspend"
+
+chosen=$(echo -e "$options" | rofi -dmenu -i -p "Power" -theme gruvbox-light)
+
+case "$chosen" in
+    "🔒 Lock") i3lock -c fbf1c7 ;;
+    "🔄 Restart") systemctl reboot ;;
+    "⏻ Shutdown") systemctl poweroff ;;
+    "🚪 Logout") i3-msg exit ;;
+    "💤 Suspend") systemctl suspend ;;
+esac
+EOF
+chmod +x ~/.config/scripts/rofi_power.sh</pre>
+
+    <h3>Picom Config</h3>
+
+        <pre>cat > ~/.config/picom/picom.conf <<'EOF'
+# Gruvbox Light themed Picom configuration
+
+# Shadows
+shadow = true;
+shadow-radius = 14;
+shadow-offset-x = -12;
+shadow-offset-y = -12;
+shadow-opacity = 0.65;
+shadow-red = 0.20;
+shadow-green = 0.20;
+shadow-blue = 0.20;
+
+shadow-exclude = [
+  "name = 'Notification'",
+  "class_g = 'Conky'",
+  "class_g ?= 'Notify-osd'",
+  "class_g = 'Cairo-clock'",
+  "class_g = 'i3-bar'",
+  "_GTK_FRAME_EXTENTS@:c"
+];
+
+# Opacity (subtle transparency for light theme)
+inactive-opacity = 0.92;
+active-opacity = 1.0;
+frame-opacity = 1.0;
+inactive-opacity-override = false;
+
+opacity-rule = [
+  "100:class_g = 'Alacritty' && focused",
+  "92:class_g = 'Alacritty' && !focused",
+  "98:class_g = 'Thunar' && focused",
+  "92:class_g = 'Thunar' && !focused",
+  "100:class_g = 'Firefox'",
+  "100:class_g = 'Spotify'",
+  "100:class_g = 'i3bar'",
+  "100:name *= 'i3lock'"
+];
+
+# Fading
+fading = true;
+fade-in-step = 0.06;
+fade-out-step = 0.06;
+fade-delta = 8;
+
+# Corners
+corner-radius = 12;
+rounded-corners-exclude = [
+  "window_type = 'dock'",
+  "window_type = 'desktop'",
+  "class_g = 'i3bar'"
+];
+
+# Background blurring (light theme optimized)
+blur-background = true;
+blur-method = "dual_kawase";
+blur-strength = 4;
+blur-background-exclude = [
+  "window_type = 'dock'",
+  "window_type = 'desktop'",
+  "class_g = 'i3bar'",
+  "_GTK_FRAME_EXTENTS@:c"
+];
+
+# Backend and performance
+backend = "glx";
+vsync = true;
+mark-wmwin-focused = true;
+mark-ovredir-focused = true;
+detect-rounded-corners = true;
+detect-client-opacity = true;
+detect-transient = true;
+use-damage = true;
+log-level = "warn";
+
+wintypes:
+{
+  tooltip = { fade = true; shadow = true; opacity = 0.94; focus = true; full-shadow = false; };
+  dock = { shadow = false; clip-shadow-above = true; }
+  dnd = { shadow = false; }
+  popup_menu = { opacity = 0.96; }
+  dropdown_menu = { opacity = 0.96; }
+};
+EOF</pre>
+
+    <h3>Dunst Config</h3>
+
+        <pre>cat > ~/.config/dunst/dunstrc <<'EOF'
+[global]
+monitor = 0
+follow = keyboard
+width = 320
+height = (0, 60)
+origin = top-right
+offset = (20, 48)
+indicate_hidden = yes
+shrink = no
+transparency = 8
+separator_height = 2
+padding = 12
+horizontal_padding = 12
+frame_width = 2
+frame_color = "#458588"
+separator_color = "#bdae93"
+sort = yes
+idle_threshold = 120
+font = JetBrains Mono Nerd Font Medium 12
+line_height = 4
+markup = full
+format = "%s\n%b"
+alignment = left
+show_age_threshold = 60
+word_wrap = yes
+ellipsize = middle
+ignore_newline = no
+stack_duplicates = true
+hide_duplicate_count = false
+show_indicators = yes
+icon_position = left
+icon_theme = "Papirus-Light"
+max_icon_size = 48
+sticky_history = yes
+history_length = 20
+browser = firefox
+always_run_script = true
+title = Dunst
+class = Dunst
+corner_radius = 8
+mouse_left_click = close_current
+mouse_middle_click = do_action
+mouse_right_click = close_all
+background = "#fbf1c7"
+foreground = "#3c3836"
+close = ctrl+space
+close_all = ctrl+shift+space
+history = ctrl+grave
+context = ctrl+shift+period
+
+[experimental]
+per_monitor_dpi = false
+
+[urgency_low]
+background = "#f9f5d7"
+foreground = "#665c54"
+frame_color = "#689d6a"
+highlight = "#689d6a"
+timeout = 4
+icon = dialog-information
+
+[urgency_normal]
+background = "#fbf1c7"
+foreground = "#3c3836"
+frame_color = "#458588"
+highlight = "#458588"
+timeout = 8
+icon = dialog-information
+
+[urgency_critical]
+background = "#fbf1c7"
+foreground = "#282828"
+frame_color = "#cc241d"
+highlight = "#cc241d"
+timeout = 0
+icon = dialog-warning
+
+[spotify]
+appname = "Spotify"
+background = "#ebdbb2"
+foreground = "#98971a"
+frame_color = "#98971a"
+timeout = 4
+
+[firefox]
+appname = "Firefox"
+background = "#f2e5bc"
+foreground = "#458588"
+frame_color = "#458588"
+timeout = 6
+
+[alacritty]
+appname = "Alacritty"
+background = "#f9f5d7"
+foreground = "#3c3836"
+frame_color = "#689d6a"
+
+[system]
+appname = "systemd"
+background = "#ebdbb2"
+foreground = "#d65d0e"
+frame_color = "#d65d0e"
+
+[network]
+appname = "NetworkManager"
+background = "#f2e5bc"
+foreground = "#458588"
+frame_color = "#458588"
+
+[bluetooth]
+appname = "bluetoothctl"
+background = "#f2e5bc"
+foreground = "#b16286"
+frame_color = "#b16286"
+
+[volume]
+appname = "pamixer"
+background = "#ebdbb2"
+foreground = "#d79921"
+frame_color = "#d79921"
+
+[brightness]
+appname = "brightnessctl"
+background = "#f9f5d7"
+foreground = "#d79921"
+frame_color = "#d79921"
+EOF</pre>
+
+    <h3>Update xinitrc</h3>
+
+        <pre>cat > ~/.xinitrc <<'EOF'
+#!/bin/bash
+
+# Set wallpaper on startup
+~/.config/scripts/wallpaper.sh auto &
+
+# Start i3 window manager
+exec i3
+EOF
+chmod +x ~/.config/scripts/*.sh && \
+chmod +x ~/.xinitrc</pre>
+
+    <h3>Thunar Config</h3>
+
+        <pre>mkdir -p ~/.config/gtk-3.0 && \
+mkdir -p ~/.config/gtk-4.0 && \
+
+# Create GTK-3 settings
+cat > ~/.config/gtk-3.0/settings.ini <<'EOF'
+[Settings]
+gtk-theme-name=Adwaita
+gtk-icon-theme-name=Papirus-Light
+gtk-font-name=Inter 11
+gtk-cursor-theme-name=Adwaita
+gtk-cursor-theme-size=24
+gtk-toolbar-style=GTK_TOOLBAR_BOTH_HORIZ
+gtk-toolbar-icon-size=GTK_ICON_SIZE_LARGE_TOOLBAR
+gtk-button-images=0
+gtk-menu-images=0
+gtk-enable-event-sounds=1
+gtk-enable-input-feedback-sounds=0
+gtk-xft-antialias=1
+gtk-xft-hinting=1
+gtk-xft-hintstyle=hintfull
+gtk-xft-rgba=rgb
+gtk-application-prefer-dark-theme=0
+EOF
+# Create GTK-4 settings
+cat > ~/.config/gtk-4.0/settings.ini <<'EOF'
+[Settings]
+gtk-theme-name=Adwaita
+gtk-icon-theme-name=Papirus-Light
+gtk-font-name=Inter 11
+gtk-cursor-theme-name=Adwaita
+gtk-cursor-theme-size=24
+gtk-application-prefer-dark-theme=0
+EOF
+# Create custom Thunar theme
+cat > ~/.config/gtk-3.0/gtk.css <<'EOF'
+/* Gruvbox Light Theme for Thunar and GTK Applications */
+
+/* Gruvbox Light Color Palette */
+@define-color gruvbox_light_bg0_hard #f9f5d7;
+@define-color gruvbox_light_bg0 #fbf1c7;
+@define-color gruvbox_light_bg0_soft #f2e5bc;
+@define-color gruvbox_light_bg1 #ebdbb2;
+@define-color gruvbox_light_bg2 #d5c4a1;
+@define-color gruvbox_light_bg3 #bdae93;
+@define-color gruvbox_light_bg4 #a89984;
+@define-color gruvbox_light_fg0 #282828;
+@define-color gruvbox_light_fg1 #3c3836;
+@define-color gruvbox_light_fg2 #504945;
+@define-color gruvbox_light_fg3 #665c54;
+@define-color gruvbox_light_fg4 #7c6f64;
+@define-color gruvbox_light_red #cc241d;
+@define-color gruvbox_light_green #98971a;
+@define-color gruvbox_light_yellow #d79921;
+@define-color gruvbox_light_blue #458588;
+@define-color gruvbox_light_purple #b16286;
+@define-color gruvbox_light_aqua #689d6a;
+@define-color gruvbox_light_orange #d65d0e;
+
+/* Main window background */
+window {
+    background-color: @gruvbox_light_bg0;
+    color: @gruvbox_light_fg1;
+}
+
+/* Sidebar styling */
+.sidebar, .sidebar * {
+    background-color: @gruvbox_light_bg1;
+    color: @gruvbox_light_fg1;
+    border: none;
+}
+
+.sidebar:selected,
+.sidebar *:selected {
+    background-color: @gruvbox_light_blue;
+    color: @gruvbox_light_bg0;
+}
+
+/* Thunar specific sidebar and shortcuts panel */
+.thunar .sidebar {
+    background-color: @gruvbox_light_bg0_soft;
+    border-right: 1px solid @gruvbox_light_bg3;
+}
+
+.thunar .shortcuts-pane {
+    background-color: @gruvbox_light_bg0_soft;
+    color: @gruvbox_light_fg1;
+}
+
+.thunar .shortcuts-pane .sidebar-row {
+    color: @gruvbox_light_fg1;
+    padding: 6px 12px;
+}
+
+.thunar .shortcuts-pane .sidebar-row:hover {
+    background-color: @gruvbox_light_bg3;
+}
+
+.thunar .shortcuts-pane .sidebar-row:selected {
+    background-color: @gruvbox_light_blue;
+    color: @gruvbox_light_bg0;
+}
+
+/* Main view styling */
+.view, iconview, treeview {
+    background-color: @gruvbox_light_bg0;
+    color: @gruvbox_light_fg1;
+}
+
+.view:selected, iconview:selected, treeview:selected {
+    background-color: @gruvbox_light_blue;
+    color: @gruvbox_light_bg0;
+}
+
+/* Thunar specific tree and list views */
+.thunar treeview {
+    background-color: @gruvbox_light_bg0;
+    color: @gruvbox_light_fg1;
+}
+
+.thunar treeview:selected {
+    background-color: @gruvbox_light_blue;
+    color: @gruvbox_light_bg0;
+}
+
+.thunar .view {
+    background-color: @gruvbox_light_bg0;
+    color: @gruvbox_light_fg1;
+}
+
+.thunar .view:selected {
+    background-color: @gruvbox_light_blue;
+    color: @gruvbox_light_bg0;
+}
+
+/* Scrollbars */
+scrollbar {
+    background-color: @gruvbox_light_bg1;
+}
+
+scrollbar slider {
+    background-color: @gruvbox_light_bg3;
+    border-radius: 6px;
+}
+
+scrollbar slider:hover {
+    background-color: @gruvbox_light_fg4;
+}
+
+/* Toolbar */
+toolbar {
+    background-color: @gruvbox_light_bg1;
+    color: @gruvbox_light_fg1;
+    border-bottom: 1px solid @gruvbox_light_bg3;
+}
+
+/* Buttons */
+button {
+    background-color: @gruvbox_light_bg2;
+    color: @gruvbox_light_fg1;
+    border: 1px solid @gruvbox_light_bg3;
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+
+button:hover {
+    background-color: @gruvbox_light_bg3;
+    border-color: @gruvbox_light_blue;
+}
+
+button:active {
+    background-color: @gruvbox_light_blue;
+    color: @gruvbox_light_bg0;
+}
+
+/* Thunar path bar buttons */
+.thunar .path-bar {
+    background-color: @gruvbox_light_bg1;
+    border: 1px solid @gruvbox_light_bg3;
+}
+
+.thunar .path-bar button {
+    background-color: transparent;
+    color: @gruvbox_light_fg1;
+    border: 1px solid transparent;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.thunar .path-bar button:hover {
+    background-color: @gruvbox_light_bg3;
+    border-color: @gruvbox_light_blue;
+}
+
+.thunar .path-bar button:active {
+    background-color: @gruvbox_light_blue;
+    color: @gruvbox_light_bg0;
+}
+
+/* Entry fields */
+entry {
+    background-color: @gruvbox_light_bg0;
+    color: @gruvbox_light_fg1;
+    border: 1px solid @gruvbox_light_bg3;
+    border-radius: 4px;
+    padding: 6px;
+}
+
+entry:focus {
+    border-color: @gruvbox_light_blue;
+    box-shadow: 0 0 0 1px @gruvbox_light_blue;
+}
+
+/* Thunar location bar */
+.thunar .location-bar {
+    background-color: @gruvbox_light_bg1;
+    border: 1px solid @gruvbox_light_bg3;
+    color: @gruvbox_light_fg1;
+}
+
+.thunar .location-bar:focus {
+    border-color: @gruvbox_light_blue;
+    box-shadow: 0 0 0 1px @gruvbox_light_blue;
+}
+
+/* Thunar rename dialog entry */
+.thunar .rename-dialog entry {
+    background-color: @gruvbox_light_bg0;
+    color: @gruvbox_light_fg1;
+    border: 1px solid @gruvbox_light_bg3;
+    border-radius: 4px;
+    padding: 6px;
+}
+
+.thunar .rename-dialog entry:focus {
+    border-color: @gruvbox_light_blue;
+    box-shadow: 0 0 0 1px @gruvbox_light_blue;
+}
+
+/* Context menus and right-click menus */
+.context-menu,
+menu,
+.menu {
+    background-color: @gruvbox_light_bg0;
+    color: @gruvbox_light_fg1;
+    border: 1px solid @gruvbox_light_bg3;
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Menu items */
+.context-menu menuitem,
+menu menuitem,
+.menu menuitem,
+menuitem {
+    background-color: transparent;
+    color: @gruvbox_light_fg1;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 1px;
+}
+
+.context-menu menuitem:hover,
+menu menuitem:hover,
+.menu menuitem:hover,
+menuitem:hover {
+    background-color: @gruvbox_light_blue;
+    color: @gruvbox_light_bg0;
+}
+
+.context-menu menuitem:disabled,
+menu menuitem:disabled,
+.menu menuitem:disabled,
+menuitem:disabled {
+    color: @gruvbox_light_fg4;
+    background-color: transparent;
+}
+
+/* Menu separators */
+.context-menu separator,
+menu separator,
+.menu separator {
+    background-color: @gruvbox_light_bg3;
+    min-height: 1px;
+    margin: 4px 8px;
+}
+
+/* Submenu arrows */
+.context-menu menuitem arrow,
+menu menuitem arrow,
+.menu menuitem arrow {
+    color: @gruvbox_light_fg4;
+    min-height: 16px;
+    min-width: 16px;
+}
+
+.context-menu menuitem:hover arrow,
+menu menuitem:hover arrow,
+.menu menuitem:hover arrow {
+    color: @gruvbox_light_bg0;
+}
+
+/* Thunar specific context menu */
+.thunar .context-menu {
+    background-color: @gruvbox_light_bg0;
+    border: 1px solid @gruvbox_light_bg4;
+}
+
+/* Header bar */
+headerbar {
+    background-color: @gruvbox_light_bg1;
+    color: @gruvbox_light_fg1;
+    border-bottom: 1px solid @gruvbox_light_bg3;
+}
+
+/* Notebook tabs */
+notebook tab {
+    background-color: @gruvbox_light_bg2;
+    color: @gruvbox_light_fg1;
+    border: 1px solid @gruvbox_light_bg3;
+    border-bottom: none;
+    padding: 8px 16px;
+}
+
+notebook tab:checked {
+    background-color: @gruvbox_light_bg0;
+    border-bottom: 2px solid @gruvbox_light_blue;
+}
+
+/* Thunar properties dialog tabs */
+.thunar .dialog {
+    background-color: @gruvbox_light_bg0;
+    color: @gruvbox_light_fg1;
+}
+
+.thunar .dialog .notebook tab {
+    background-color: @gruvbox_light_bg1;
+    color: @gruvbox_light_fg1;
+    border: 1px solid @gruvbox_light_bg3;
+}
+
+.thunar .dialog .notebook tab:checked {
+    background-color: @gruvbox_light_bg0;
+    border-bottom: 2px solid @gruvbox_light_blue;
+}
+
+/* Status bar */
+statusbar {
+    background-color: @gruvbox_light_bg1;
+    color: @gruvbox_light_fg1;
+    border-top: 1px solid @gruvbox_light_bg3;
+    padding: 4px;
+}
+
+/* Progress bars in file operations */
+.thunar progressbar {
+    background-color: @gruvbox_light_bg2;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.thunar progressbar progress {
+    background-color: @gruvbox_light_blue;
+    border-radius: 4px;
+}
+
+/* File operation dialogs */
+.thunar .message-dialog {
+    background-color: @gruvbox_light_bg0;
+    color: @gruvbox_light_fg1;
+}
+
+.thunar .message-dialog .dialog-action-area button {
+    background-color: @gruvbox_light_bg1;
+    color: @gruvbox_light_fg1;
+    border: 1px solid @gruvbox_light_bg3;
+    border-radius: 6px;
+    padding: 8px 16px;
+    margin: 4px;
+}
+
+.thunar .message-dialog .dialog-action-area button:hover {
+    background-color: @gruvbox_light_bg3;
+    border-color: @gruvbox_light_blue;
+}
+
+.thunar .message-dialog .dialog-action-area button:active {
+    background-color: @gruvbox_light_blue;
+    color: @gruvbox_light_bg0;
+}
+EOF
+papirus-folders -C blue --theme Papirus-Light && \
+
+# Create .gtkrc-2.0 for GTK2 applications
+cat > ~/.gtkrc-2.0 <<'EOF'
+gtk-theme-name="Adwaita"
+gtk-icon-theme-name="Papirus-Light"
+gtk-font-name="Inter 11"
+gtk-cursor-theme-name="Adwaita"
+gtk-cursor-theme-size=24
+gtk-toolbar-style=GTK_TOOLBAR_BOTH_HORIZ
+gtk-toolbar-icon-size=GTK_ICON_SIZE_LARGE_TOOLBAR
+gtk-button-images=0
+gtk-menu-images=0
+gtk-enable-event-sounds=1
+gtk-enable-input-feedback-sounds=0
+gtk-xft-antialias=1
+gtk-xft-hinting=1
+gtk-xft-hintstyle="hintfull"
+gtk-xft-rgba="rgb"
+EOF
+# Set environment variables for consistent theming
+echo 'export GTK_THEME=Adwaita' >> ~/.profile && \
+echo 'export QT_STYLE_OVERRIDE=Adwaita' >> ~/.profile</pre>
+
+    <h3>Fish Shell Config</h3>
+
+        <pre># Execute these in fish
+
+# Install Fisher plugin manager for Fish
+curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher
+
+# Install Gruvbox theme for Fish
+fisher install Jomik/fish-gruvbox
+
+# Set Gruvbox Light theme
+set -U fish_theme gruvbox_light</pre>
+
+    <h3>Fish Config</h3>
+
+        <pre>cat > ~/.config/fish/config.fish <<'EOF'
+# Gruvbox Light theme for Fish Shell
+
+# Set Gruvbox Light colors
+set -U fish_color_normal 3c3836
+set -U fish_color_command 458588
+set -U fish_color_quote 98971a
+set -U fish_color_redirection d65d0e
+set -U fish_color_end cc241d
+set -U fish_color_error cc241d
+set -U fish_color_param 3c3836
+set -U fish_color_comment 928374
+set -U fish_color_match d79921
+set -U fish_color_selection bdae93
+set -U fish_color_search_match d79921 --background=f2e5bc
+set -U fish_color_history_current d79921
+set -U fish_color_operator d65d0e
+set -U fish_color_escape 689d6a
+set -U fish_color_cwd 458588
+set -U fish_color_cwd_root cc241d
+set -U fish_color_valid_path --underline
+set -U fish_color_autosuggestion 928374
+set -U fish_color_user 689d6a
+set -U fish_color_host 458588
+set -U fish_color_cancel cc241d
+set -U fish_pager_color_completion 3c3836
+set -U fish_pager_color_description 928374
+set -U fish_pager_color_prefix 458588
+set -U fish_pager_color_progress ebdbb2 --background=458588
+
+# Gruvbox Light prompt colors
+set -U fish_color_host_remote d79921
+
+# Environment variables
+set -x EDITOR nvim
+set -x BROWSER firefox
+
+# Aliases for your workflow
+alias ll 'ls -alF'
+alias la 'ls -A'
+alias l 'ls -CF'
+alias vim 'nvim'
+alias cat 'bat --theme=gruvbox-light'
+alias grep 'rg'
+alias find 'fd'
+alias top 'btop'
+alias df 'df -h'
+alias du 'du -h'
+alias free 'free -h'
+
+# Custom prompt function
+function fish_prompt
+    set -l last_status $status
+
+    # Colors
+    set -l gruvbox_blue 458588
+    set -l gruvbox_green 98971a
+    set -l gruvbox_red cc241d
+    set -l gruvbox_yellow d79921
+    set -l gruvbox_fg 3c3836
+
+    # User and hostname
+    echo -n (set_color $gruvbox_blue)"sid"(set_color normal)
+    echo -n (set_color $gruvbox_fg)"@"(set_color normal)
+    echo -n (set_color $gruvbox_green)(hostname)(set_color normal)
+    echo -n (set_color $gruvbox_fg)": "(set_color normal)
+
+    # Current directory
+    echo -n (set_color $gruvbox_blue)(prompt_pwd)(set_color normal)
+
+    # Git status
+    if git rev-parse --git-dir > /dev/null 2>&1
+        set -l git_branch (git branch --show-current 2>/dev/null)
+        if test -n "$git_branch"
+            echo -n (set_color $gruvbox_fg)" on "(set_color normal)
+            echo -n (set_color $gruvbox_yellow)"$git_branch"(set_color normal)
+        end
+    end
+
+    # Prompt symbol
+    if test $last_status -eq 0
+        echo -n (set_color $gruvbox_green)" ❯ "(set_color normal)
+    else
+        echo -n (set_color $gruvbox_red)" ❯ "(set_color normal)
+    end
+end
+
+# Right prompt with time
+function fish_right_prompt
+    set -l gruvbox_comment 928374
+    echo (set_color $gruvbox_comment)(date "+%H:%M:%S")(set_color normal)
+end
+
+# Greeting
+function fish_greeting
+    set -l gruvbox_blue 458588
+    set -l gruvbox_green 98971a
+    echo (set_color $gruvbox_blue)"Welcome to Fish Shell - Gruvbox Light Theme!"(set_color normal)
+    echo (set_color $gruvbox_green)"Happy coding, sid! 🐟"(set_color normal)
+end
+
+# Custom functions
+function mkcd
+    mkdir -p $argv && cd $argv
+end
+
+function extract
+    if test -f $argv[1]
+        switch $argv[1]
+            case '*.tar.bz2'
+                tar xjf $argv[1]
+            case '*.tar.gz'
+                tar xzf $argv[1]
+            case '*.bz2'
+                bunzip2 $argv[1]
+            case '*.rar'
+                unrar x $argv[1]
+            case '*.gz'
+                gunzip $argv[1]
+            case '*.tar'
+                tar xf $argv[1]
+            case '*.tbz2'
+                tar xjf $argv[1]
+            case '*.tgz'
+                tar xzf $argv[1]
+            case '*.zip'
+                unzip $argv[1]
+            case '*.Z'
+                uncompress $argv[1]
+            case '*.7z'
+                7z x $argv[1]
+            case '*'
+                echo "'$argv[1]' cannot be extracted via extract()"
+        end
+    else
+        echo "'$argv[1]' is not a valid file"
+    end
+end
+EOF</pre>
+
+    <h3>BTOP Config</h3>
+
+        <pre>cat > ~/.config/btop/btop.conf <<'EOF'
+# Btop Gruvbox Light Configuration
+
+# Color theme - Use the built-in gruvbox_light theme
+color_theme = "gruvbox_light"
+
+# Theme directory (btop will look for themes here)
+theme_background = true
+
+# Update time in milliseconds
+update_ms = 1000
+
+# Processes sorting (cpu, mem, pid, program, arguments, threads, user, time)
+proc_sorting = "cpu"
+
+# Reverse sorting order
+proc_reversed = false
+
+# Show processes as a tree
+proc_tree = false
+
+# Show process percentage in tree mode
+proc_per_core = false
+
+# Show process memory in bytes instead of percent
+proc_mem_bytes = true
+
+# Show processes per CPU core
+proc_info_smaps = false
+
+# Show battery stats in top right
+show_battery = true
+
+# Show CPU temperature
+check_temp = true
+
+# Show disk IO stats
+show_disks = true
+
+# Show network stats
+show_network = true
+
+# Show processes box
+show_proc = true
+
+# CPU sensor
+cpu_sensor = "Auto"
+
+# Show CPU frequency
+show_cpu_freq = true
+
+# Background update (continue updating when not focused)
+background_update = true
+
+# Force tty mode
+force_tty = false
+
+# Preset 0 = Default
+preset = 0
+
+# Graph symbols (default: braille, block, tty)
+graph_symbol = "braille"
+
+# Graph symbol for memory and disks
+graph_symbol_mem = "braille"
+graph_symbol_net = "braille"
+graph_symbol_proc = "braille"
+
+# Shown boxes (cpu, mem, net, proc)
+shown_boxes = "cpu mem net proc"
+
+# Update check at start
+update_check = false
+
+# Log level (0 = disabled, 1 = error, 2 = warning, 3 = info, 4 = debug)
+log_level = 1
+EOF
+chmod 644 ~/.config/btop/btop.conf</pre>
+
+    <h3>Alternative BTOP Config</h3>
+
+        <pre># if the gruvbox_light doesn't exist in btop
+# Create themes directory
+mkdir -p ~/.config/btop/themes && \
+
+# Create custom Gruvbox Light theme
+cat > ~/.config/btop/themes/gruvbox_light.theme <<'EOF'
+# Gruvbox Light theme for btop
+
+# All graphs and meters can be gradients
+# For single color graphs leave "mid" and "end" variable empty.
+# Use "start" and "end" variables for two color gradient
+# Use "start", "mid" and "end" variables for three color gradient
+
+# Main background, empty for terminal default, need to be empty if you want transparent background
+theme[main_bg]="#fbf1c7"
+
+# Main text color
+theme[main_fg]="#3c3836"
+
+# Title color for boxes
+theme[title]="#458588"
+
+# Highlight color for keyboard shortcuts
+theme[hi_fg]="#cc241d"
+
+# Background color of selected item in processes box
+theme[selected_bg]="#bdae93"
+
+# Foreground color of selected item in processes box
+theme[selected_fg]="#282828"
+
+# Color of inactive/disabled text
+theme[inactive_fg]="#928374"
+
+# Color of text appearing on top of graphs, i.e uptime and current network graph scaling
+theme[graph_text]="#504945"
+
+# Background color of the percentage meters
+theme[meter_bg]="#d5c4a1"
+
+# Misc colors for processes box including mini cpu graphs, details memory graph and details status text
+theme[proc_misc]="#689d6a"
+
+# CPU, Memory, Network, Proc box outline colors
+theme[cpu_box]="#458588"
+theme[mem_box]="#98971a"
+theme[net_box]="#d65d0e"
+theme[proc_box]="#b16286"
+
+# Box divider line and small boxes line color
+theme[div_line]="#a89984"
+
+# Temperature graph color (Green -> Yellow -> Red)
+theme[temp_start]="#98971a"
+theme[temp_mid]="#d79921"
+theme[temp_end]="#cc241d"
+
+# CPU graph colors (Blue shades)
+theme[cpu_start]="#458588"
+theme[cpu_mid]="#689d6a"
+theme[cpu_end]="#b16286"
+
+# Mem/Disk free meter (Green -> Yellow -> Red)
+theme[free_start]="#98971a"
+theme[free_mid]="#d79921"
+theme[free_end]="#cc241d"
+
+# Mem/Disk cached meter (Blue shades)
+theme[cached_start]="#458588"
+theme[cached_mid]="#689d6a"
+theme[cached_end]="#b16286"
+
+# Mem/Disk available meter (Yellow -> Orange -> Red)
+theme[available_start]="#d79921"
+theme[available_mid]="#d65d0e"
+theme[available_end]="#cc241d"
+
+# Mem/Disk used meter (Green -> Yellow -> Red)
+theme[used_start]="#98971a"
+theme[used_mid]="#d79921"
+theme[used_end]="#cc241d"
+
+# Download graph colors (Green shades)
+theme[download_start]="#98971a"
+theme[download_mid]="#689d6a"
+theme[download_end]="#458588"
+
+# Upload graph colors (Orange shades)
+theme[upload_start]="#d65d0e"
+theme[upload_mid]="#d79921"
+theme[upload_end]="#cc241d"
+
+# Process box color gradient for threads, mem and cpu usage (Green -> Yellow -> Red)
+theme[process_start]="#98971a"
+theme[process_mid]="#d79921"
+theme[process_end]="#cc241d"
+EOF
+# Update btop config to use custom theme
+sed -i 's/color_theme = "gruvbox_light"/color_theme = "gruvbox_light"/' ~/.config/btop/btop.conf</pre>
+    
+    <h3>Firefox Addons</h3>
+
+        <pre>firefox https://addons.mozilla.org/en-US/addon/gruvbox-light-theme/</pre>
+
+    <h3>Firefox Config</h3>
+
+        <pre>cat > firefox-gruvbox-setup.sh <<'SCRIPT'
+#!/bin/bash
+find_firefox_profile() {
+    local profile=$(find ~/.mozilla/firefox/ -maxdepth 1 -name "*.default-release" -type d | head -1)
+    if [ -z "$profile" ]; then
+        profile=$(find ~/.mozilla/firefox/ -maxdepth 1 -name "*.default" -type d | head -1)
+    fi
+    if [ -z "$profile" ]; then
+        profile=$(find ~/.mozilla/firefox/ -maxdepth 1 -name "*default*" -type d | head -1)
+    fi
+    echo "$profile"
+}
+FIREFOX_PROFILE=$(find_firefox_profile)
+if [ -z "$FIREFOX_PROFILE" ]; then
+    echo "Error: Could not find Firefox profile directory."
+    ls -la ~/.mozilla/firefox/
+    exit 1
+fi
+mkdir -p "$FIREFOX_PROFILE/chrome"
+cat > "$FIREFOX_PROFILE/chrome/userChrome.css" <<'EOF'
+/* Firefox Gruvbox Light Theme - userChrome.css */
+:root {
+  --gruvbox-bg0: #fbf1c7;
+  --gruvbox-bg1: #ebdbb2;
+  --gruvbox-bg2: #d5c4a1;
+  --gruvbox-bg3: #bdae93;
+  --gruvbox-bg4: #a89984;
+  --gruvbox-fg0: #282828;
+  --gruvbox-fg1: #3c3836;
+  --gruvbox-fg2: #504945;
+  --gruvbox-fg3: #665c54;
+  --gruvbox-fg4: #7c6f64;
+  --gruvbox-red: #cc241d;
+  --gruvbox-green: #98971a;
+  --gruvbox-yellow: #d79921;
+  --gruvbox-blue: #458588;
+  --gruvbox-purple: #b16286;
+  --gruvbox-aqua: #689d6a;
+  --gruvbox-orange: #d65d0e;
+  --gruvbox-gray: #928374;
+}
+#main-window {
+  background-color: var(--gruvbox-bg0) !important;
+}
+#TabsToolbar {
+  background-color: var(--gruvbox-bg1) !important;
+  border-bottom: 1px solid var(--gruvbox-bg3) !important;
+}
+.tabbrowser-tab {
+  background-color: var(--gruvbox-bg2) !important;
+  border: 1px solid var(--gruvbox-bg3) !important;
+  border-radius: 6px 6px 0 0 !important;
+  margin: 2px 1px 0 1px !important;
+  color: var(--gruvbox-fg1) !important;
+}
+.tabbrowser-tab[selected="true"] {
+  background-color: var(--gruvbox-bg0) !important;
+  border-bottom: 2px solid var(--gruvbox-blue) !important;
+  color: var(--gruvbox-fg0) !important;
+}
+.tabbrowser-tab:hover:not([selected="true"]) {
+  background-color: var(--gruvbox-bg3) !important;
+}
+.tab-text {
+  color: inherit !important;
+}
+.tab-close-button {
+  color: var(--gruvbox-red) !important;
+}
+.tab-close-button:hover {
+  background-color: var(--gruvbox-red) !important;
+  color: var(--gruvbox-bg0) !important;
+  border-radius: 3px !important;
+}
+#urlbar, #searchbar {
+  background-color: var(--gruvbox-bg0) !important;
+  border: 1px solid var(--gruvbox-bg3) !important;
+  border-radius: 6px !important;
+  color: var(--gruvbox-fg1) !important;
+}
+#urlbar[focused="true"], #searchbar[focused="true"] {
+  border-color: var(--gruvbox-blue) !important;
+  box-shadow: 0 0 0 1px var(--gruvbox-blue) !important;
+}
+#urlbar .urlbarView {
+  background-color: var(--gruvbox-bg1) !important;
+  border: 1px solid var(--gruvbox-bg3) !important;
+  border-radius: 6px !important;
+}
+#urlbar .urlbarView-row {
+  color: var(--gruvbox-fg1) !important;
+}
+#urlbar .urlbarView-row[selected] {
+  background-color: var(--gruvbox-blue) !important;
+  color: var(--gruvbox-bg0) !important;
+}
+#nav-bar {
+  background-color: var(--gruvbox-bg1) !important;
+  border-bottom: 1px solid var(--gruvbox-bg3) !important;
+}
+.toolbarbutton-1 {
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+  color: var(--gruvbox-fg1) !important;
+}
+.toolbarbutton-1:hover {
+  background-color: var(--gruvbox-bg3) !important;
+  border-color: var(--gruvbox-blue) !important;
+}
+.toolbarbutton-1[checked="true"] {
+  background-color: var(--gruvbox-blue) !important;
+  color: var(--gruvbox-bg0) !important;
+}
+#PersonalToolbar {
+  background-color: var(--gruvbox-bg2) !important;
+  border-bottom: 1px solid var(--gruvbox-bg3) !important;
+}
+.bookmark-item {
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  color: var(--gruvbox-fg1) !important;
+  padding: 4px 8px !important;
+  margin: 2px !important;
+}
+.bookmark-item:hover {
+  background-color: var(--gruvbox-bg3) !important;
+  border-color: var(--gruvbox-blue) !important;
+}
+#sidebar-box {
+  background-color: var(--gruvbox-bg1) !important;
+  border-right: 1px solid var(--gruvbox-bg3) !important;
+}
+#sidebar {
+  background-color: var(--gruvbox-bg1) !important;
+  color: var(--gruvbox-fg1) !important;
+}
+menupopup {
+  background-color: var(--gruvbox-bg0) !important;
+  border: 1px solid var(--gruvbox-bg3) !important;
+  border-radius: 6px !important;
+  color: var(--gruvbox-fg1) !important;
+}
+menuitem {
+  color: var(--gruvbox-fg1) !important;
+  padding: 6px 12px !important;
+}
+menuitem:hover {
+  background-color: var(--gruvbox-blue) !important;
+  color: var(--gruvbox-bg0) !important;
+}
+menuitem[disabled="true"] {
+  color: var(--gruvbox-gray) !important;
+}
+scrollbar {
+  background-color: var(--gruvbox-bg1) !important;
+}
+scrollbar thumb {
+  background-color: var(--gruvbox-bg3) !important;
+  border-radius: 6px !important;
+}
+scrollbar thumb:hover {
+  background-color: var(--gruvbox-fg4) !important;
+}
+#status-bar {
+  background-color: var(--gruvbox-bg1) !important;
+  border-top: 1px solid var(--gruvbox-bg3) !important;
+  color: var(--gruvbox-fg1) !important;
+}
+#developer-toolbar {
+  background-color: var(--gruvbox-bg2) !important;
+  border-top: 1px solid var(--gruvbox-bg3) !important;
+  color: var(--gruvbox-fg1) !important;
+}
+.findbar-find-fast {
+  background-color: var(--gruvbox-bg1) !important;
+  border: 1px solid var(--gruvbox-bg3) !important;
+  border-radius: 6px !important;
+  color: var(--gruvbox-fg1) !important;
+}
+.notificationbox-stack {
+  background-color: var(--gruvbox-bg1) !important;
+  border-bottom: 1px solid var(--gruvbox-bg3) !important;
+}
+EOF
+cat > "$FIREFOX_PROFILE/user.js" <<'EOF'
+user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
+user_pref("browser.theme.content-theme", 0);
+user_pref("browser.theme.toolbar-theme", 0);
+user_pref("ui.systemUsesDarkTheme", 0);
+EOF
+cat > "$FIREFOX_PROFILE/chrome/userContent.css" <<'EOF'
+* {
+  scrollbar-color: #bdae93 #ebdbb2 !important;
+  scrollbar-width: thin !important;
+}
+@-moz-document url-prefix("about:") {
+  body {
+    background-color: #fbf1c7 !important;
+    color: #3c3836 !important;
+  }
+}
+@-moz-document url-prefix("moz-extension://") {
+  body {
+    background-color: #fbf1c7 !important;
+    color: #3c3836 !important;
+  }
+}
+EOF
+echo "Firefox Gruvbox Light theme installed successfully!"
+SCRIPT
+chmod +x firefox-gruvbox-setup.sh && ./firefox-gruvbox-setup.sh</pre>
+
+    <h3>Restart Required Services</h3>
+
+        <pre># Execute these in fish
+
+# Reload GTK settings
+gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita' && gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Light'
+
+# Restart dunst to apply new settings
+killall dunst; dunst &
+
+# Source fish config
+source ~/.config/fish/config.fish</pre>
+
+    <h3>CMUS Config</h3>
+
+        <pre>cat > ~/.config/cmus/config <<'EOF'
+# Cmus Gruvbox Light Configuration
+# Bulletproof and minimalist setup
+
+# === GRUVBOX LIGHT COLOR SCHEME ===
+# Main colors
+set color_cmdline_bg=default
+set color_cmdline_fg=237
+set color_error=160
+set color_info=108
+set color_separator=243
+
+# Window colors
+set color_win_bg=default
+set color_win_cur=109
+set color_win_cur_sel=223
+set color_win_dir=109
+set color_win_fg=237
+set color_win_inactive_cur_sel=243
+set color_win_inactive_sel=243
+set color_win_sel=223
+set color_win_sel_bg=108
+
+# Title colors
+set color_titleline_bg=default
+set color_titleline_fg=109
+
+# Status line colors
+set color_statusline_bg=default
+set color_statusline_fg=237
+
+# Current track in status
+set color_win_cur_sel_bg=108
+set color_win_inactive_cur_sel_bg=243
+
+# === DISPLAY SETTINGS ===
+# Show file format and bitrate
+set format_current= %a - %l -%3n. %t%= %y %d %{?X!=0?%3X ?    }
+set format_playlist= %-25%a %3n. %t%= %y %d %{?X!=0?%3X ?    }
+set format_title=%a - %l - %t (%y)
+set format_trackwin=%3n. %t%= %y %d %{?X!=0?%3X ?    }
+
+# Album list format
+set format_treewin=  %l
+set format_treewin_artist=%a
+
+# Time display format
+set format_statusline= %{status} %{?show_playback_position?%{position} %{?duration?/ %{duration} }?%{?duration?%{duration} }}- %{total} | %{?volume>=0?vol: %{?lvolume!=rvolume?%{lvolume},%{rvolume}?%{volume}} %{?stream?buf: %{buffer}}%{?show_current_bitrate & bitrate>=0? %{bitrate} kbps} %=%{?repeat_current?repeat current?%{?play_library?%{playlist_mode} from %{?play_sorted?sorted }library?playlist}} | %1{continue}%1{follow}%1{repeat}%1{shuffle}
+
+# === BEHAVIOR SETTINGS ===
+# Mouse support
+set mouse=true
+
+# Automatically save and resume playback position
+set resume=true
+
+# Smart artist/album sorting
+set smart_artist_sort=true
+
+# Show remaining time
+set show_remaining_time=false
+
+# Buffer settings for smooth playback
+set buffer_seconds=10
+
+# === KEY BINDINGS ===
+# Keep default bindings but add some useful ones
+bind -f common q quit -i
+bind -f common r toggle repeat
+bind -f common s toggle shuffle
+bind -f common f toggle follow
+bind -f common C toggle continue
+bind -f common M toggle aaa_mode
+bind -f common o toggle play_library
+bind -f common i win-sel-cur
+bind -f common I win-sel-cur
+
+# Volume control (fine-tuned)
+bind -f common + vol +5%
+bind -f common = vol +10%
+bind -f common - vol -5%
+bind -f common _ vol -10%
+
+# Seeking
+bind -f common Right seek +5
+bind -f common Left seek -5
+bind -f common Up seek +60
+bind -f common Down seek -60
+
+# View switching
+bind -f common 1 view tree
+bind -f common 2 view sorted
+bind -f common 3 view playlist
+bind -f common 4 view queue
+bind -f common 5 view browser
+bind -f common 6 view filters
+bind -f common 7 view settings
+
+# Library management
+bind -f common a win-add-l
+bind -f common A win-add-Q
+bind -f common D win-remove
+bind -f common p win-mv-after
+bind -f common P win-mv-before
+
+# === AUDIO SETTINGS ===
+# Output plugin (automatic detection)
+set output_plugin=alsa
+
+# Mixer settings for ALSA
+set mixer.alsa.device=default
+set mixer.alsa.channel=Master
+
+# Software volume control
+set softvol=false
+set softvol_state=0 0
+
+# === LIBRARY SETTINGS ===
+# Auto-reshuffle when playlist ends
+set play_library=true
+
+# Default view on startup
+set startup_view=tree
+
+# === SEARCH AND FILTER SETTINGS ===
+# Case insensitive search
+set search_wrap=true
+
+# === VISUAL SETTINGS ===
+# Show hidden files in browser
+set show_all_tracks=true
+
+# Display full paths in browser
+set tree_width_percent=25
+set tree_width_max=0
+
+# Status display options
+set show_playback_position=true
+set show_current_bitrate=false
+
+# === PLAYLIST SETTINGS ===
+# Auto-expand albums in tree view
+set auto_expand_albums_follow=true
+set auto_expand_albums_search=true
+set auto_expand_albums_selcur=true
+
+# === PERFORMANCE SETTINGS ===
+# Cache settings for better performance
+set lib_sort=albumartist album discnumber tracknumber title filename
+set id3_default_charset=UTF-8
+
+# Update interval
+set status_display_program=
+
+# === FILE TYPE ASSOCIATIONS ===
+# Audio file priorities (lossless first)
+set play_sorted=false
+
+# === MISCELLANEOUS ===
+# Confirm before quitting
+set confirm_run=false
+
+# Show duplicate tracks
+set display_artist_sort_name=false
+
+# Skip track if file not found
+set skip_track_info=false
+EOF
+
+# Create a startup script to ensure proper theming
+cat > ~/.config/cmus/start_cmus.sh <<'EOF'
+#!/bin/bash
+
+# Cmus startup script with proper theming
+echo "Starting cmus with Gruvbox Light theme..."
+
+# Ensure cmus config directory exists
+mkdir -p ~/.config/cmus
+
+# Start cmus
+exec cmus "$@"
+EOF
+
+chmod +x ~/.config/cmus/start_cmus.sh
+
+# Create cmus desktop entry for application menu
+mkdir -p ~/.local/share/applications
+cat > ~/.local/share/applications/cmus.desktop <<'EOF'
+[Desktop Entry]
+Name=Cmus Music Player
+Comment=Cmus - C* Music Player with Gruvbox Light theme
+Exec=alacritty -e ~/.config/cmus/start_cmus.sh
+Icon=audio-player
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Player;
+Keywords=music;audio;player;mp3;flac;ogg;
+StartupNotify=false
+EOF
+
+# Add cmus alias to Fish config
+echo '' >> ~/.config/fish/config.fish
+echo '# Cmus with Gruvbox Light theme' >> ~/.config/fish/config.fish
+echo 'alias cmus "~/.config/cmus/start_cmus.sh"' >> ~/.config/fish/config.fish
+
+# Add music directory to cmus library (if it exists)
+if [ -d ~/Music ]; then
+    cat >> ~/.config/cmus/config <<'EOF'
+
+# === AUTO-IMPORT MUSIC DIRECTORY ===
+# Automatically add Music directory to library
+set lib_add_filter=
+EOF
+fi
+
+echo "=== Cmus Gruvbox Light Configuration Created! ==="
+echo
+echo "Installation complete. Features:"
+echo "• Gruvbox Light color scheme matching your rice"
+echo "• Bulletproof configuration that won't break with updates"
+echo "• Smart key bindings and intuitive controls"
+echo "• Automatic library management"
+echo "• Performance optimized settings"
+echo
+echo "Usage:"
+echo "1. Start with: cmus"
+echo "2. Add music: :add ~/Music (or your music directory)"
+echo "3. Press 'tab' to see library, 'q' to quit"
+echo "4. Use 1-7 keys to switch between views"
+echo "5. Space to play/pause, 'n' for next, 'p' for previous"
+echo
+echo "Key bindings:"
+echo "• c = pause/play"
+echo "• b/n = previous/next track"
+echo "• +/- = volume up/down"
+echo "• s = toggle shuffle"
+echo "• r = toggle repeat"
+echo "• / = search"
+echo "• q = quit"
+echo
+echo "The theme uses conservative settings that remain compatible across cmus updates."</pre>
+
+    <h3>GRUB Config</h3>
+
+        <pre>sudo mkdir -p /boot/grub/themes/gruvbox-light && \
+
+# Create the main theme file
+sudo tee /boot/grub/themes/gruvbox-light/theme.txt > /dev/null <<'EOF'
+# GRUB Gruvbox Light Theme
+# General settings
+title-text: ""
+desktop-image: "background.png"
+desktop-color: "#fbf1c7"
+terminal-font: "JetBrains Mono Regular 16"
+
+# Show the boot menu
++ boot_menu {
+  left = 20%
+  top = 20%
+  width = 60%
+  height = 60%
+  item_font = "JetBrains Mono Regular 18"
+  item_color = "#3c3836"
+  selected_item_color = "#fbf1c7"
+  selected_item_pixmap_style = "select_*.png"
+  item_height = 32
+  item_padding = 8
+  item_spacing = 4
+  icon_width = 24
+  icon_height = 24
+  scrollbar = true
+  scrollbar_color = "#a89984"
+  scrollbar_thumb = "#665c54"
+}
+
+# Progress bar
++ progress_bar {
+  id = "__timeout__"
+  left = 20%
+  top = 82%
+  width = 60%
+  height = 24
+  font = "JetBrains Mono Regular 14"
+  text_color = "#3c3836"
+  fg_color = "#458588"
+  bg_color = "#d5c4a1"
+  border_color = "#665c54"
+  text = "@TIMEOUT_NOTIFICATION_LONG@"
+}
+
+# Labels
++ label {
+  top = 10%
+  left = 0
+  width = 100%
+  height = 40
+  text = "ARCH LINUX - GRUVBOX LIGHT"
+  align = "center"
+  font = "JetBrains Mono Bold 24"
+  color = "#458588"
+}
+
++ label {
+  top = 88%
+  left = 0
+  width = 100%
+  height = 20
+  text = "Use ↑ and ↓ to select • Enter to boot • E to edit • C for command line"
+  align = "center"
+  font = "JetBrains Mono Regular 12"
+  color = "#665c54"
+}
+EOF
+
+# Create a simple background (solid color)
+# We'll create a 1920x1080 PNG with gruvbox light background
+sudo tee /boot/grub/themes/gruvbox-light/create_background.py > /dev/null <<'EOF'
+#!/usr/bin/env python3
+from PIL import Image, ImageDraw, ImageFont
+import os
+
+# Gruvbox light colors
+bg_color = (251, 241, 199)  # #fbf1c7
+accent_color = (69, 133, 136)  # #458588
+text_color = (60, 56, 54)  # #3c3836
+
+# Create image
+width, height = 1920, 1080
+image = Image.new('RGB', (width, height), bg_color)
+draw = ImageDraw.Draw(image)
+
+# Add subtle geometric pattern
+for i in range(0, width, 120):
+    for j in range(0, height, 120):
+        # Draw subtle squares
+        square_color = (245, 235, 191)  # Slightly darker bg
+        draw.rectangle([i+10, j+10, i+110, j+110], fill=square_color, outline=None)
+
+# Add corner accents
+corner_size = 200
+# Top left
+draw.polygon([(0, 0), (corner_size, 0), (0, corner_size)], fill=accent_color + (50,))
+# Top right
+draw.polygon([(width, 0), (width-corner_size, 0), (width, corner_size)], fill=accent_color + (30,))
+# Bottom left
+draw.polygon([(0, height), (corner_size, height), (0, height-corner_size)], fill=accent_color + (30,))
+# Bottom right
+draw.polygon([(width, height), (width-corner_size, height), (width, height-corner_size)], fill=accent_color + (50,))
+
+# Save the image
+image.save('/boot/grub/themes/gruvbox-light/background.png')
+print("Background created successfully!")
+EOF
+
+# Install Pillow if not available and create background
+if ! python3 -c "import PIL" 2>/dev/null; then
+    sudo pacman -S --noconfirm python-pillow
+fi
+
+sudo python3 /boot/grub/themes/gruvbox-light/create_background.py
+sudo rm /boot/grub/themes/gruvbox-light/create_background.py
+
+# Create selection highlight images
+sudo mkdir -p /boot/grub/themes/gruvbox-light
+
+# Create select images using ImageMagick (simpler than PIL for basic shapes)
+sudo pacman -S --noconfirm imagemagick
+
+# Create selection background
+sudo convert -size 800x32 xc:"#458588" /boot/grub/themes/gruvbox-light/select_c.png
+sudo convert -size 800x32 xc:"#458588" /boot/grub/themes/gruvbox-light/select_w.png
+sudo convert -size 800x32 xc:"#458588" /boot/grub/themes/gruvbox-light/select_e.png
+
+# Update GRUB configuration
+sudo tee -a /etc/default/grub > /dev/null <<'EOF'
+
+# Gruvbox Light Theme Settings
+GRUB_THEME="/boot/grub/themes/gruvbox-light/theme.txt"
+GRUB_BACKGROUND="/boot/grub/themes/gruvbox-light/background.png"
+GRUB_COLOR_NORMAL="light-gray/light-gray"
+GRUB_COLOR_HIGHLIGHT="blue/light-gray"
+EOF
+
+# Remove any duplicate GRUB_THEME entries and keep only our new one
+sudo sed -i '/^GRUB_THEME=/d' /etc/default/grub
+echo 'GRUB_THEME="/boot/grub/themes/gruvbox-light/theme.txt"' | sudo tee -a /etc/default/grub
+
+# Regenerate GRUB configuration
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+echo "=== GRUB Gruvbox Light Theme Installed! ==="
+echo "Reboot to see the new theme."
+echo "If you want to test it first, run: sudo grub-emu"</pre>
+
+    <h3>TTY/Console Config</h3>
+
+        <pre>sudo tee /etc/systemd/system/gruvbox-light-tty.service > /dev/null <<'EOF'
+[Unit]
+Description=Set Gruvbox Light colors for TTY
+After=systemd-vconsole-setup.service
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/set-gruvbox-light-tty
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create the script that sets TTY colors
+sudo tee /usr/local/bin/set-gruvbox-light-tty > /dev/null <<'EOF'
+#!/bin/bash
+
+# Gruvbox Light color palette for TTY
+# Using Linux console color codes (16 colors)
+
+# Set colors for all active TTYs
+for tty in /dev/tty{1..6}; do
+    if [ -c "$tty" ]; then
+        # Set 16-color palette
+        # Format: \e]P<hex-color-index><hex-color-value>
+        printf '\e]P0fbf1c7' > "$tty"  # Black (background) - gruvbox light bg
+        printf '\e]P1cc241d' > "$tty"  # Red - gruvbox red
+        printf '\e]P298971a' > "$tty"  # Green - gruvbox green
+        printf '\e]P3d79921' > "$tty"  # Yellow - gruvbox yellow
+        printf '\e]P4458588' > "$tty"  # Blue - gruvbox blue
+        printf '\e]P5b16286' > "$tty"  # Magenta - gruvbox purple
+        printf '\e]P6689d6a' > "$tty"  # Cyan - gruvbox aqua
+        printf '\e]P73c3836' > "$tty"  # White (foreground) - gruvbox dark fg
+
+        # Bright colors
+        printf '\e]P8928374' > "$tty"  # Bright Black - gruvbox gray
+        printf '\e]P99d0006' > "$tty"  # Bright Red - gruvbox bright red
+        printf '\e]PA79740e' > "$tty"  # Bright Green - gruvbox bright green
+        printf '\e]PBb57614' > "$tty"  # Bright Yellow - gruvbox bright yellow
+        printf '\e]PC076678' > "$tty"  # Bright Blue - gruvbox bright blue
+        printf '\e]PD8f3f71' > "$tty"  # Bright Magenta - gruvbox bright purple
+        printf '\e]PE427b58' > "$tty"  # Bright Cyan - gruvbox bright aqua
+        printf '\e]PF282828' > "$tty"  # Bright White - gruvbox darkest
+
+        # Clear screen to apply changes
+        printf '\e[2J\e[H' > "$tty"
+    fi
+done
+EOF
+sudo chmod +x /usr/local/bin/set-gruvbox-light-tty
+
+# Enable the service
+sudo systemctl enable gruvbox-light-tty.service
+
+# Also set it for current session
+sudo /usr/local/bin/set-gruvbox-light-tty
+
+# Configure vconsole for font and keymap consistency
+sudo tee /etc/vconsole.conf > /dev/null <<'EOF'
+# Console configuration
+KEYMAP=us
+FONT=ter-v16b
+FONT_MAP=8859-1
+EOF
+
+# Install terminus font for better console experience
+sudo pacman -S --noconfirm terminus-font
+
+# Create a script to apply TTY theme on demand
+cat > ~/.config/scripts/apply_tty_theme.sh <<'EOF'
+#!/bin/bash
+
+echo "Applying Gruvbox Light theme to current TTY..."
+
+# Apply colors to current TTY
+printf '\e]P0fbf1c7'  # Black (background)
+printf '\e]P1cc241d'  # Red
+printf '\e]P298971a'  # Green
+printf '\e]P3d79921'  # Yellow
+printf '\e]P4458588'  # Blue
+printf '\e]P5b16286'  # Magenta
+printf '\e]P6689d6a'  # Cyan
+printf '\e]P73c3836'  # White (foreground)
+printf '\e]P8928374'  # Bright Black
+printf '\e]P99d0006'  # Bright Red
+printf '\e]PA79740e'  # Bright Green
+printf '\e]PBb57614'  # Bright Yellow
+printf '\e]PC076678'  # Bright Blue
+printf '\e]PD8f3f71'  # Bright Magenta
+printf '\e]PE427b58'  # Bright Cyan
+printf '\e]PF282828'  # Bright White
+
+# Clear and reset
+clear
+echo "Gruvbox Light TTY theme applied!"
+echo "Colors:"
+echo -e "\e[31m■\e[32m■\e[33m■\e[34m■\e[35m■\e[36m■\e[37m■\e[0m Normal"
+echo -e "\e[91m■\e[92m■\e[93m■\e[94m■\e[95m■\e[96m■\e[97m■\e[0m Bright"
+EOF
+chmod +x ~/.config/scripts/apply_tty_theme.sh
+
+# Add TTY theme to Fish shell profile so it's applied when switching to TTY
+echo '' >> ~/.config/fish/config.fish
+echo '# Apply TTY theme if in console' >> ~/.config/fish/config.fish
+echo 'if test "$TERM" = "linux"' >> ~/.config/fish/config.fish
+echo '    ~/.config/scripts/apply_tty_theme.sh >/dev/null 2>&1' >> ~/.config/fish/config.fish
+echo 'end' >> ~/.config/fish/config.fish
+
+echo "=== TTY Gruvbox Light Theme Setup Complete! ==="
+echo
+echo "The theme will be applied:"
+echo "1. Automatically on boot (systemd service)"
+echo "2. When you switch to TTY from X11 (Fish integration)"
+echo "3. Manually by running: ~/.config/scripts/apply_tty_theme.sh"
+echo
+echo "To test: Press Ctrl+Alt+F2 to switch to TTY2, then Alt+F7 to return to X11"</pre>
+
+
+    <h2>REBOOT</h2>
+
+        <pre>sudo reboot</pre>
+
+    <h2>ETHERNET FIX, WIFI MANAGEMENT, BLUETOOTH MANAGEMENT, AND STEAM TWEAKS</h2>
+    <h3>Ethernet Fix</h3>
+
+        <pre># Check USB ethernet adapter details
+lsusb | grep -i asix && ip link show
+
+# Check for USB ethernet adapter in system logs
+sudo dmesg | grep -i -E "(ax88179|asix|cdc_ncm|eth|enp3s0f3u1u1c2)" | tail -10
+
+# Load drivers and create persistent rules
+sudo modprobe cdc_ncm ax88179_178a && echo -e "cdc_ncm\nax88179_178a\ncdc_ether" | sudo tee /etc/modules-load.d/ethernet.conf
+
+# Add udev rule for automatic detection (replace YOUR_VENDOR_ID with your actual vendor ID from lsusb)
+echo 'ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0b95", RUN+="/sbin/modprobe cdc_ncm"' | sudo tee /etc/udev/rules.d/50-usb-ethernet.conf
+
+# Add NetworkManager dispatcher script for better USB ethernet handling
+sudo tee /etc/NetworkManager/dispatcher.d/99-usb-ethernet > /dev/null <<'EOF'
+#!/bin/bash
+if [[ "$1" =~ ^(enp.*u.*|eth[0-9]+)$ ]] && [[ "$2" == "up" ]]; then
+    sleep 2
+    nmcli device set "$1" managed yes
+fi
+EOF
+sudo chmod +x /etc/NetworkManager/dispatcher.d/99-usb-ethernet
+
+# Reload udev rules and restart NetworkManager
+sudo udevadm control --reload-rules && sudo systemctl restart NetworkManager
+
+# Test internet connectivity
+ping -c 3 google.com</pre>
+
+    <h3>WiFi Management</h3>
+
+        <pre># List available networks
+nmcli device wifi list
+
+# Connect to network
+nmcli device wifi connect "NETWORK_NAME" password "PASSWORD"
+
+# Connect to hidden network
+nmcli device wifi connect "NETWORK_NAME" password "PASSWORD" hidden yes
+
+# Disconnect
+nmcli device disconnect wlan0
+
+# Reconnect to saved network
+nmcli connection up "NETWORK_NAME"
+
+# Show saved connections
+nmcli connection show
+
+# Delete saved connection
+nmcli connection delete "NETWORK_NAME"
+
+# Show device status
+nmcli device status
+
+# Turn WiFi off/on
+nmcli radio wifi off
+nmcli radio wifi on
+
+# Restart NetworkManager
+sudo systemctl restart NetworkManager
+
+# Check NetworkManager logs
+journalctl -u NetworkManager --since "10 minutes ago"
+
+# Show WiFi interface info
+ip addr show wlan0
+
+# Show currently connected network
+nmcli device wifi list | grep '*'</pre>
+
+    <h3>Bluetooth Management</h3>
+
+        <pre># Enable and start Bluetooth service
+sudo systemctl enable bluetooth && sudo systemctl start bluetooth
+
+# Check Bluetooth status
+systemctl status bluetooth
+
+# List Bluetooth controllers
+bluetoothctl list
+
+# Enter Bluetooth control interface
+bluetoothctl
+
+# Inside bluetoothctl:
+power on
+agent on
+default-agent
+scan on
+
+# Stop scanning
+scan off
+
+# Pair with device
+pair XX:XX:XX:XX:XX:XX
+
+# Connect to device
+connect XX:XX:XX:XX:XX:XX
+
+# Trust device
+trust XX:XX:XX:XX:XX:XX
+
+# List paired devices
+devices
+
+# Exit bluetoothctl
+exit
+
+# Disconnect device
+bluetoothctl disconnect XX:XX:XX:XX:XX:XX
+
+# Remove device
+bluetoothctl remove XX:XX:XX:XX:XX:XX
+
+# Check if Bluetooth is blocked
+rfkill list
+
+# Unblock Bluetooth
+sudo rfkill unblock bluetooth
+
+# Restart Bluetooth service
+sudo systemctl restart bluetooth
+
+# Check Bluetooth logs
+journalctl -u bluetooth --since "10 minutes ago"
+
+# Configure Bluetooth for auto-connect trusted devices
+sudo tee -a /etc/bluetooth/main.conf > /dev/null <<'EOF'
+
+# Auto-connect trusted devices
+ReconnectAttempts=7
+ReconnectIntervals=1,2,4,8,16,32,64
+AutoConnectTimeout=60
+EOF
+
+# Restart Bluetooth service
+sudo systemctl restart bluetooth</pre>
+
+    <h3>Steam Tweaks</h3>
+
+        <pre># Add this to your launch options and user "performance" script before gaming sessions
+gamemoderun %command%</pre>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const glossaryLi = document.createElement('li');
         const glossaryA = document.createElement('a');
         glossaryA.href = '#glossary';
-        glossaryA.textContent = '🔖 Arch Linux Setup Glossary & Cheat Sheet';
+        glossaryA.textContent = 'GLOSSARY AND CHEAT SHEET';
         glossaryA.addEventListener('click', function(e) {
             e.preventDefault();
             const glossarySection = document.querySelector('#glossary');

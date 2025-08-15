@@ -121,7 +121,7 @@ sudo sensors-detect --auto && \
 sudo sed -i 's/#AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf && \
 systemctl --user daemon-reexec && \
 systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service && \
-sudo systemctl enable --now bluetooth tlp udisks2 && \
+sudo systemctl enable --now bluetooth tlp udisks2 gamemode && \
 sudo systemctl mask systemd-networkd-wait-online.service && \
 sudo sed -i 's/^#DefaultTimeoutStopSec=.*$/DefaultTimeoutStopSec=10s/' /etc/systemd/system.conf && \
 sudo sed -i 's/^#DefaultTimeoutStartSec=.*$/DefaultTimeoutStartSec=5s/' /etc/systemd/system.conf && \
@@ -3162,3 +3162,4 @@ gamemoderun RADV_PERFTEST=gpl %command%</pre>
 </body>
 
 </html>
+

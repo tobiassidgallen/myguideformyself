@@ -12,7 +12,7 @@
 
     <h2>TTY INSTALLATION</h2>
 
-    <pre>setfont ter-132b && loadkeys us
+    <pre>setfont -d && loadkeys us
 
 iwctl
 device list
@@ -582,7 +582,7 @@ set $gruvbox18 #af3a03
 set $gruvbox19 #79740e
 
 # Font for window titles and bar
-font pango:JetBrains Mono Nerd Font 12
+font pango:JetBrains Mono Nerd Font 11
 
 # Use Mouse+$mod to drag floating windows
 floating_modifier $mod
@@ -765,7 +765,7 @@ exec --no-startup-id dunst
 bar {
     status_command i3status
     position top
-    font pango:JetBrains Mono Nerd Font 12
+    font pango:JetBrains Mono Nerd Font 11
     separator_symbol "|"
     colors {
         background $gruvbox0
@@ -934,7 +934,7 @@ startup_mode = "Windowed"
 normal = { family = "JetBrains Mono Nerd Font", style = "Regular" }
 bold = { family = "JetBrains Mono Nerd Font", style = "Bold" }
 italic = { family = "JetBrains Mono Nerd Font", style = "Italic" }
-size = 12
+size = 11
 
 [colors.primary]
 background = "#fbf1c7"
@@ -1007,7 +1007,7 @@ configuration {
     width: 600;
     lines: 15;
     columns: 1;
-    font: "JetBrains Mono Nerd Font Medium 12";
+    font: "JetBrains Mono Nerd Font Medium 11";
     show-icons: true;
     terminal: "alacritty";
     ssh-client: "ssh";
@@ -1378,7 +1378,7 @@ frame_color = "#458588"
 separator_color = "#bdae93"
 sort = yes
 idle_threshold = 120
-font = JetBrains Mono Nerd Font Medium 12
+font = JetBrains Mono Nerd Font Medium 11
 line_height = 4
 markup = full
 format = "%s\n%b"
@@ -3162,4 +3162,5 @@ gamemoderun RADV_PERFTEST=gpl %command%</pre>
 </body>
 
 </html>
+
 
